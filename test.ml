@@ -1,5 +1,10 @@
 open OUnit
+open Batteries_uni
+open List
+
 open Util
+open Datalog
+open PosDatalog
 
 let testUnify _ =
 	assert_equal None (unify [Right 0; Right 0] [Right "a"; Right "b"]);
@@ -9,12 +14,28 @@ let testUnify _ =
 	assert_equal None (unify [Left 0] [Left 1]);
 	assert_equal (Some []) (unify [Left 0] [Left 0])
 
+let testPosDatalog _ =
+	let clauses = [{
+		head = {
+			rel = "R";
+			params = [Right "x"; Right "y"; Left (mkNumber 5)]
+		};
+		syms = [];
+		constraints = [
+			mkUpperBound "x" false 3;
+			Option.get (mkPosConstraint [1, "y"] GR 2)
+		]
+	}]
+	and shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
+	let check vals = assert_equal (shouldContain vals) (vals |> map mkNumber |> contained clauses "R") in
+	iter check (repeat (of_enum (-4--6)) 3 |> n_cartesian_product)
 
 let suite =
 	"Tests" >::: [
-		"unify" >:: testUnify
+		"unify" >:: testUnify;
+		"posDatalog" >:: testPosDatalog
 	]
 
 let test _ =
 	let unit _ = () in
-	unit (run_test_tt_main suite)
+	run_test_tt_main suite |> unit
