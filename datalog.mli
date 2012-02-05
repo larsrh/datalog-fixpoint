@@ -10,6 +10,7 @@ type 'a symbol = {
 }
 
 module type Datalog = sig
+
 	type number
 	type 'a constr
 
@@ -22,4 +23,5 @@ module type Datalog = sig
 	val fixpoint: clause list -> clause list
 
 	val contained: clause list -> relation -> number list -> bool
+
 end;;

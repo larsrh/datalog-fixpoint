@@ -18,7 +18,7 @@ let testPosDatalog _ =
 	let clauses = [{
 		head = {
 			rel = "R";
-			params = [Right "x"; Right "y"; Left (mkNumber 5)]
+			params = [Right "x"; Right "y"; Left 5]
 		};
 		syms = [];
 		constraints = [
@@ -27,7 +27,7 @@ let testPosDatalog _ =
 		]
 	}]
 	and shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
-	let check vals = assert_equal (shouldContain vals) (vals |> map mkNumber |> contained clauses "R") in
+	let check vals = assert_equal (shouldContain vals) (contained clauses "R" vals) in
 	iter check (repeat (of_enum (-4--6)) 3 |> n_cartesian_product)
 
 let suite =
