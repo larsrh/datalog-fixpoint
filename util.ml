@@ -3,6 +3,8 @@ open List
 
 type ('a, 'b) either = Left of 'a | Right of 'b
 
+let left x = Left x and right y = Right y
+
 let either f g = function
 | Left a -> f a
 | Right b -> g b
@@ -11,6 +13,10 @@ let rec lookup elem = function
 | [] -> None
 | (x, y) :: xs when x = elem -> Some y
 | _ :: xs -> lookup elem xs
+
+let rec repeat x = function
+| 0 -> []
+| n -> x :: repeat x (n-1)
 
 module M = Enum.WithMonad(Option.Monad)
 

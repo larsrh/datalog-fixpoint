@@ -1,8 +1,14 @@
 type ('a, 'b) either = Left of 'a | Right of 'b
 
+val left: 'a -> ('a, 'b) either
+
+val right: 'b -> ('a, 'b) either
+
 val either: ('a -> 'c) -> ('b -> 'c) -> ('a, 'b) either -> 'c
 
 val lookup: 'a -> ('a * 'b) list -> 'b option
+
+val repeat: 'a -> int -> 'a list
 
 (*
 	Matches a list of atoms against another list of atoms. An atom can be a
