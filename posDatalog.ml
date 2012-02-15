@@ -68,3 +68,37 @@ let contained clauses relation nums =
 	and test constr = Option.map_default (evalConstr constr) false in
 	let testAll clause = for_all (assignment clause.head.params |> flip test) clause.constraints in
 	exists testAll (filter isFact clauses)
+
+
+(** Tests **)
+
+let test =
+	let open OUnit in
+
+	let testQElim _ =
+		let expected = [mkUpperBound "y" true (-2); mkPosConstraint [1, "y"] GEQ 18 |> Option.get]
+		and actual = qElim "x" [mkUpperBound "x" true (-5); mkPosConstraint [1, "y"; 1, "x"; 2, "x"] GEQ 3 |> Option.get; mkUpperBound "y" true (-2)] in
+		assert_equal expected actual
+
+	and testContains _ =
+		let clauses = [{
+			head = {
+				rel = "R";
+				params = [Right "x"; Right "y"; Left 5]
+			};
+			syms = [];
+			constraints = [
+				mkUpperBound "x" false 3;
+				Option.get (mkPosConstraint [1, "y"] GR 2)
+			]
+		}]
+		and shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
+		let check vals = assert_equal (shouldContain vals) (contained clauses "R" vals) in
+		iter check (repeat (of_enum (-4--6)) 3 |> n_cartesian_product)
+
+	in
+
+	"PosDatalog" >::: [
+		"qElim" >:: testQElim;
+		"contains" >:: testContains
+	]
