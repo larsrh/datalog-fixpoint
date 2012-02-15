@@ -43,6 +43,22 @@ let evalConstr (constr: number constr) (assignment: var -> number) =
 	and upper var = -(assignment var) in
 	either pos upper constr.lhs >= constr.rhs
 
+(* Transforms -x >= b and c * x + d_i * y_i >= a into d_i * y_i >= a + c * b *)
+let removeX (x: var) (b: number) (constr: number posConstr) (a: number) =
+	let xs, rest = partition (fun (_, y) -> x = y) constr in
+	let s = map fst xs |> sum in
+	{lhs = Left rest; rhs = a + s * b}
+
+let qElim (x: var) (constraints: number constr list) =
+	let isPos c = either (const true) (const false) c.lhs
+	and containsX c = either (map snd |- mem x) ((=) x) c.lhs in
+	let pos, upper = partition isPos constraints in
+	let posX, posNonX = partition containsX pos
+	and upperX, upperNonX = partition containsX upper
+	and elim ({lhs = Left pos; rhs = a}, {rhs = b}) = removeX x b pos a in
+	let newConstrs = cartesian_product posX upperX |> map elim in
+	posNonX @ upperNonX @ newConstrs
+
 let fixpoint _ = raise (Failure "unimplemented")
 
 let contained clauses relation nums =
