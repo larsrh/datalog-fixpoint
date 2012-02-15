@@ -10,6 +10,8 @@ val some: 'a -> 'a option
 
 val lookup: 'a -> ('a * 'b) list -> 'b option
 
+val swap: 'a * 'b -> 'b * 'a
+
 val repeat: 'a -> int -> 'a list
 
 (*
@@ -24,7 +26,7 @@ val repeat: 'a -> int -> 'a list
 
 		X(u, v) :- R(u, v, 1, 0).
 
-	An application of `unify' leads the mapping `[x -> u; y -> v; z -> 1]'.
+	An application of `unify' generates the mapping `[x -> u; y -> v; z -> 1]'.
 
 	This function is not symmetric, as it does not generate "true" equality
 	constraints. For example, the head `[x; x]' cannot be instantiated with

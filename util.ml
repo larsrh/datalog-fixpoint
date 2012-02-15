@@ -16,6 +16,8 @@ let rec lookup elem = function
 | (x, y) :: xs when x = elem -> Some y
 | _ :: xs -> lookup elem xs
 
+let swap (x, y) = y, x
+
 let rec repeat x = function
 | 0 -> []
 | n -> x :: repeat x (n-1)

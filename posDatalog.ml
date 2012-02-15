@@ -8,7 +8,7 @@ type number = int
 
 type op = GEQ | GR
 
-type 'a posConstr = ('a * var) list
+type 'a posConstr = (var * 'a) list
 type upperConstr = var
 
 (* GR will be transformed into GEQ *)
@@ -23,6 +23,13 @@ type clause = {
 	constraints: number constr list;
 }
 
+let simplify (constr: number posConstr) =
+	let cmp (x, _) (y, _) = compare x y in
+	let grouped = group cmp constr
+	and pair xs = hd xs |> fst, map snd xs |> sum
+	and pos (_, n) = n > 0 in
+	map pair grouped |> filter pos
+
 let translateRHS b = function
 | GR -> b + 1
 | GEQ -> b
@@ -30,7 +37,7 @@ let translateRHS b = function
 let mkPosConstraint cs op b =
 	let non_neg (x, _) = x >= 0 in
 	if for_all non_neg cs
-		then Some {lhs = Left cs; rhs = translateRHS b op}
+		then Some {lhs = map swap cs |> simplify |> left; rhs = translateRHS b op}
 		else None
 
 let mkUpperBound v inclusive b =
@@ -38,20 +45,20 @@ let mkUpperBound v inclusive b =
 	{lhs = Right v; rhs = translateRHS (-b) op}
 
 let evalConstr (constr: number constr) (assignment: var -> number) =
-	let eval (num, var) = num * assignment var in
+	let eval (var, num) = num * assignment var in
 	let pos cs = fold_left (+) 0 (map eval cs)
 	and upper var = -(assignment var) in
 	either pos upper constr.lhs >= constr.rhs
 
 (* Transforms -x >= b and c * x + d_i * y_i >= a into d_i * y_i >= a + c * b *)
 let removeX (x: var) (b: number) (constr: number posConstr) (a: number) =
-	let xs, rest = partition (fun (_, y) -> x = y) constr in
-	let s = map fst xs |> sum in
-	{lhs = Left rest; rhs = a + s * b}
+	let rest = remove_assoc x constr
+	and c = assoc x constr in
+	{lhs = Left rest; rhs = a + c * b}
 
 let qElim (x: var) (constraints: number constr list) =
 	let isPos c = either (const true) (const false) c.lhs
-	and containsX c = either (map snd |- mem x) ((=) x) c.lhs in
+	and containsX c = either (map fst |- mem x) ((=) x) c.lhs in
 	let pos, upper = partition isPos constraints in
 	let posX, posNonX = partition containsX pos
 	and upperX, upperNonX = partition containsX upper
