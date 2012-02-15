@@ -37,3 +37,23 @@ let unify l1 l2 =
 		| Some binding when param = binding -> Some constrs
 		| Some _ -> None in
 	M.fold_monad f [] (enum combined)
+
+
+(** Tests **)
+
+let test =
+	let open OUnit in
+
+	let testUnify _ =
+		assert_equal None (unify [Right 0; Right 0] [Right "a"; Right "b"]);
+		assert_equal (Some [0, Right "a"]) (unify [Right 0; Right 0] [Right "a"; Right "a"]);
+		assert_equal (Some [0, Left 3]) (unify [Right 0; Right 0] [Left 3; Left 3]);
+		assert_equal (Some [1, Right "a"; 0, Right "a"]) (unify [Right 0; Right 1] [Right "a"; Right "a"]);
+		assert_equal None (unify [Left 0] [Left 1]);
+		assert_equal (Some []) (unify [Left 0] [Left 0])
+
+	in
+
+	"Util" >::: [
+		"unify" >:: testUnify
+	]

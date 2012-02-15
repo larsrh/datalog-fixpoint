@@ -35,3 +35,6 @@ val repeat: 'a -> int -> 'a list
 	variable.
 *)
 val unify: ('a, 'b) either list -> ('a, 'c) either list -> ('b * ('a, 'c) either) list option
+
+
+val test: OUnit.test
