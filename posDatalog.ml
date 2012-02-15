@@ -35,9 +35,10 @@ let translateRHS b = function
 | GEQ -> b
 
 let mkPosConstraint cs op b =
-	let non_neg (x, _) = x >= 0 in
-	if for_all non_neg cs
-		then Some {lhs = map swap cs |> simplify |> left; rhs = translateRHS b op}
+	let non_neg (_, x) = x >= 0
+	and simplified = map swap cs |> simplify in
+	if for_all non_neg simplified
+		then Some {lhs = Left simplified; rhs = translateRHS b op}
 		else None
 
 let mkUpperBound v inclusive b =
@@ -82,7 +83,12 @@ let contained clauses relation nums =
 let test =
 	let open OUnit in
 
-	let testQElim _ =
+	let testSimplify _ =
+		let expected = Some {lhs = Left ["x", 3; "y", 1]; rhs = 3}
+		and actual = mkPosConstraint [1, "y"; 1, "x"; 2, "x"; -1, "z"; 1, "z"] GEQ 3 in
+		assert_equal expected actual
+
+	and testQElim _ =
 		let expected = [{lhs = Right "y"; rhs = 2}; {lhs = Left ["y", 1]; rhs = 18}]
 		and actual = qElim "x" [{lhs = Right "x"; rhs = 5}; {lhs = Left ["y", 1; "x", 3]; rhs = 3}; {lhs = Right "y"; rhs = 2}] in
 		assert_equal expected actual
@@ -106,6 +112,7 @@ let test =
 	in
 
 	"PosDatalog" >::: [
+		"simplify" >:: testSimplify;
 		"qElim" >:: testQElim;
 		"contains" >:: testContains
 	]
