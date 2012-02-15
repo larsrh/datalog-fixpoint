@@ -6,6 +6,8 @@ val right: 'b -> ('a, 'b) either
 
 val either: ('a -> 'c) -> ('b -> 'c) -> ('a, 'b) either -> 'c
 
+val some: 'a -> 'a option
+
 val lookup: 'a -> ('a * 'b) list -> 'b option
 
 val repeat: 'a -> int -> 'a list

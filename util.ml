@@ -9,6 +9,8 @@ let either f g = function
 | Left a -> f a
 | Right b -> g b
 
+let some f = Some f
+
 let rec lookup elem = function
 | [] -> None
 | (x, y) :: xs when x = elem -> Some y
