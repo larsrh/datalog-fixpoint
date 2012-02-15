@@ -83,8 +83,8 @@ let test =
 	let open OUnit in
 
 	let testQElim _ =
-		let expected = [mkUpperBound "y" true (-2); mkPosConstraint [1, "y"] GEQ 18 |> Option.get]
-		and actual = qElim "x" [mkUpperBound "x" true (-5); mkPosConstraint [1, "y"; 1, "x"; 2, "x"] GEQ 3 |> Option.get; mkUpperBound "y" true (-2)] in
+		let expected = [{lhs = Right "y"; rhs = 2}; {lhs = Left ["y", 1]; rhs = 18}]
+		and actual = qElim "x" [{lhs = Right "x"; rhs = 5}; {lhs = Left ["y", 1; "x", 3]; rhs = 3}; {lhs = Right "y"; rhs = 2}] in
 		assert_equal expected actual
 
 	and testContains _ =
