@@ -14,7 +14,7 @@ type upperConstr = var
 (* GR will be transformed into GEQ *)
 type 'a constr = {
 	lhs: ('a posConstr, upperConstr) either;
-	rhs: number
+	rhs: 'a
 }
 
 type clause = {
@@ -26,8 +26,6 @@ type clause = {
 let translateRHS b = function
 | GR -> b + 1
 | GEQ -> b
-
-let mkNumber x = x
 
 let mkPosConstraint cs op b =
 	let non_neg (x, _) = x >= 0 in
