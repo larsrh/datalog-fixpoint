@@ -1,19 +1,13 @@
-open Batteries_uni
-open List
-
-open Util
-
 type var = string
 
 type relation = string
 
+type 'a exp = Constant of 'a | Variable of var
+
 type 'a symbol = {
 	rel: relation;
-	params: ('a, var) either list;
+	params: 'a exp list;
 }
-
-let vars sym =
-	filter_map (either (const None) some) sym.params
 
 module type Datalog = sig
 

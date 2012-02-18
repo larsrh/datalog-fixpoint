@@ -11,9 +11,11 @@ type op = GEQ | GR
 type 'a posConstr = (var * 'a) list
 type upperConstr = var
 
+type 'a lhs = PosConstr of 'a posConstr | UpperConstr of upperConstr
+
 (* GR will be transformed into GEQ *)
 type 'a constr = {
-	lhs: ('a posConstr, upperConstr) either;
+	lhs: 'a lhs;
 	rhs: 'a
 }
 
@@ -25,9 +27,9 @@ type clause = {
 
 let simplify (constr: number posConstr) =
 	let cmp (x, _) (y, _) = compare x y in
-	let grouped = group cmp constr
-	and pair xs = hd xs |> fst, map snd xs |> sum
-	and pos (_, n) = n > 0 in
+	let grouped = group cmp constr in
+	let pair xs = hd xs |> fst, map snd xs |> sum in
+	let pos (_, n) = n > 0 in
 	map pair grouped |> filter pos
 
 let translateRHS b = function
@@ -35,45 +37,61 @@ let translateRHS b = function
 | GEQ -> b
 
 let mkPosConstraint cs op b =
-	let non_neg (_, x) = x >= 0
-	and simplified = map swap cs |> simplify in
+	let non_neg (_, x) = x >= 0 in
+	let simplified = map swap cs |> simplify in
 	if for_all non_neg simplified
-		then Some {lhs = Left simplified; rhs = translateRHS b op}
+		then Some {lhs = PosConstr simplified; rhs = translateRHS b op}
 		else None
 
 let mkUpperBound v inclusive b =
 	let op = if inclusive then GEQ else GR in
-	{lhs = Right v; rhs = translateRHS (-b) op}
+	{lhs = UpperConstr v; rhs = translateRHS (-b) op}
 
 let evalConstr (constr: number constr) (assignment: var -> number) =
 	let eval (var, num) = num * assignment var in
-	let pos cs = fold_left (+) 0 (map eval cs)
-	and upper var = -(assignment var) in
-	either pos upper constr.lhs >= constr.rhs
+	let lhs =
+		match constr.lhs with
+		| PosConstr pos -> fold_left (+) 0 (map eval pos)
+		| UpperConstr v -> -(assignment v) in
+	lhs >= constr.rhs
+
+(* Substitutes occurences of variables in a constraint by other variables or
+   values and simplifies them accordingly. Returns `None' if the substitution
+   produces an unsatisfiable formula. *)
+(**let subst (mapping: (var * (var, number) either) list) (constr: number constr) =
+	let testUpper var = assoc 
+| Left 
+| Right var -> assoc **)
 
 (* Transforms -x >= b and c * x + d_i * y_i >= a into d_i * y_i >= a + c * b *)
 let removeX (x: var) (b: number) (constr: number posConstr) (a: number) =
-	let rest = remove_assoc x constr
-	and c = assoc x constr in
-	{lhs = Left rest; rhs = a + c * b}
+	let rest = remove_assoc x constr in
+	let c = assoc x constr in
+	{lhs = PosConstr rest; rhs = a + c * b}
 
-let qElim (x: var) (constraints: number constr list) =
-	let isPos c = either (const true) (const false) c.lhs
-	and containsX c = either (map fst |- mem x) ((=) x) c.lhs in
-	let pos, upper = partition isPos constraints in
-	let posX, posNonX = partition containsX pos
-	and upperX, upperNonX = partition containsX upper
-	and elim ({lhs = Left pos; rhs = a}, {rhs = b}) = removeX x b pos a in
+let qElim (x: var) (constrs: number constr list) =
+	let isPos c =
+		match c.lhs with
+		| PosConstr _ -> true
+		| UpperConstr _ -> false in
+	let containsX c = 
+		match c.lhs with
+		| PosConstr pos -> map fst pos |> mem x
+		| UpperConstr v -> v = x in
+	let pos, upper = partition isPos constrs in
+	let posX, posNonX = partition containsX pos in
+	let upperX, upperNonX = partition containsX upper in
+	let elim ({lhs = PosConstr pos; rhs = a}, {rhs = b}) = removeX x b pos a in
 	let newConstrs = cartesian_product posX upperX |> map elim in
 	posNonX @ upperNonX @ newConstrs
 
 let fixpoint _ = raise (Failure "unimplemented")
 
 let contained clauses relation nums =
-	let strip (var, Left num) = (var, num) in
-	let assignment params = map left nums |> unify params |> Option.map (map strip |- flip assoc)
-	and isFact clause = length clause.syms = 0 && clause.head.rel = relation && length clause.head.params = length nums
-	and test constr = Option.map_default (evalConstr constr) false in
+	let strip (var, Constant num) = (var, num) in
+	let assignment params = nums |> map (fun x -> Constant x) |> unify params |> Option.map (map strip |- flip assoc) in
+	let isFact clause = length clause.syms = 0 && clause.head.rel = relation && length clause.head.params = length nums in
+	let test constr = Option.map_default (evalConstr constr) false in
 	let testAll clause = for_all (assignment clause.head.params |> flip test) clause.constraints in
 	exists testAll (filter isFact clauses)
 
@@ -84,20 +102,20 @@ let test =
 	let open OUnit in
 
 	let testSimplify _ =
-		let expected = Some {lhs = Left ["x", 3; "y", 1]; rhs = 3}
+		let expected = Some {lhs = PosConstr ["x", 3; "y", 1]; rhs = 3}
 		and actual = mkPosConstraint [1, "y"; 1, "x"; 2, "x"; -1, "z"; 1, "z"] GEQ 3 in
 		assert_equal expected actual
 
 	and testQElim _ =
-		let expected = [{lhs = Right "y"; rhs = 2}; {lhs = Left ["y", 1]; rhs = 18}]
-		and actual = qElim "x" [{lhs = Right "x"; rhs = 5}; {lhs = Left ["y", 1; "x", 3]; rhs = 3}; {lhs = Right "y"; rhs = 2}] in
+		let expected = [{lhs = UpperConstr "y"; rhs = 2}; {lhs = PosConstr ["y", 1]; rhs = 18}]
+		and actual = qElim "x" [{lhs = UpperConstr "x"; rhs = 5}; {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3}; {lhs = UpperConstr "y"; rhs = 2}] in
 		assert_equal expected actual
 
 	and testContains _ =
 		let clauses = [{
 			head = {
 				rel = "R";
-				params = [Right "x"; Right "y"; Left 5]
+				params = [Variable "x"; Variable "y"; Constant 5]
 			};
 			syms = [];
 			constraints = [

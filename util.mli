@@ -1,10 +1,4 @@
-type ('a, 'b) either = Left of 'a | Right of 'b
-
-val left: 'a -> ('a, 'b) either
-
-val right: 'b -> ('a, 'b) either
-
-val either: ('a -> 'c) -> ('b -> 'c) -> ('a, 'b) either -> 'c
+open Datalog
 
 val some: 'a -> 'a option
 
@@ -36,7 +30,7 @@ val repeat: 'a -> int -> 'a list
 	For both parameters, `Left` corresponds to a constant and `Right` to a
 	variable.
 *)
-val unify: ('a, 'b) either list -> ('a, 'c) either list -> ('b * ('a, 'c) either) list option
+val unify: 'a exp list -> 'a exp list -> (var * 'a exp) list option
 
 
 val test: OUnit.test

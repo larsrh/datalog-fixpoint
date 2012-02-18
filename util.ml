@@ -1,13 +1,7 @@
 open Batteries_uni
 open List
 
-type ('a, 'b) either = Left of 'a | Right of 'b
-
-let left x = Left x and right y = Right y
-
-let either f g = function
-| Left a -> f a
-| Right b -> g b
+open Datalog
 
 let some f = Some f
 
@@ -27,13 +21,13 @@ module M = Enum.WithMonad(Option.Monad)
 let unify l1 l2 =
 	let combined = combine l1 l2
 	and f constrs = function
-	| Left c1, Left c2 ->
+	| Constant c1, Constant c2 ->
 		if c1 = c2
 			then Some constrs
 			else None
-	| Left c, Right _ ->
+	| Constant c, Variable _ ->
 		None
-	| Right v, param ->
+	| Variable v, param ->
 		match lookup v constrs with
 		| None -> Some ((v, param) :: constrs)
 		| Some binding when param = binding -> Some constrs
@@ -47,12 +41,12 @@ let test =
 	let open OUnit in
 
 	let testUnify _ =
-		assert_equal None (unify [Right 0; Right 0] [Right "a"; Right "b"]);
-		assert_equal (Some [0, Right "a"]) (unify [Right 0; Right 0] [Right "a"; Right "a"]);
-		assert_equal (Some [0, Left 3]) (unify [Right 0; Right 0] [Left 3; Left 3]);
-		assert_equal (Some [1, Right "a"; 0, Right "a"]) (unify [Right 0; Right 1] [Right "a"; Right "a"]);
-		assert_equal None (unify [Left 0] [Left 1]);
-		assert_equal (Some []) (unify [Left 0] [Left 0])
+		assert_equal None (unify [Variable "a"; Variable "a"] [Variable "a"; Variable "b"]);
+		assert_equal (Some ["b", Variable "a"]) (unify [Variable "b"; Variable "b"] [Variable "a"; Variable "a"]);
+		assert_equal (Some ["a", Constant 3]) (unify [Variable "a"; Variable "a"] [Constant 3; Constant 3]);
+		assert_equal (Some ["d", Variable "a"; "c", Variable "a"]) (unify [Variable "c"; Variable "d"] [Variable "a"; Variable "a"]);
+		assert_equal None (unify [Constant 0] [Constant 1]);
+		assert_equal (Some []) (unify [Constant 0] [Constant 0])
 
 	in
 
