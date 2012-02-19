@@ -1,5 +1,7 @@
 open OUnit
-open Batteries_uni
+
+open MyBat
+open Util
 
 let suite =
 	"Tests" >::: [

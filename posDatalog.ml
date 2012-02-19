@@ -1,6 +1,6 @@
-open Batteries_uni
 open List
 
+open MyBat
 open Util
 open Datalog
 
@@ -26,11 +26,10 @@ type clause = {
 }
 
 let simplify (constr: number posConstr) =
-	let cmp (x, _) (y, _) = compare x y in
-	let grouped = group cmp constr in
-	let pair xs = hd xs |> fst, map snd xs |> sum in
+	let grouped = groupBy fst constr in
+	let sumN (x, ns) = x, map snd ns |> fold_left (+) 0 in
 	let pos (_, n) = n > 0 in
-	map pair grouped |> filter pos
+	map sumN grouped |> filter pos
 
 let translateRHS b = function
 | GR -> b + 1
@@ -82,16 +81,16 @@ let qElim (x: var) (constrs: number constr list) =
 	let posX, posNonX = partition containsX pos in
 	let upperX, upperNonX = partition containsX upper in
 	let elim ({lhs = PosConstr pos; rhs = a}, {rhs = b}) = removeX x b pos a in
-	let newConstrs = cartesian_product posX upperX |> map elim in
+	let newConstrs = cartesianProduct posX upperX |> map elim in
 	posNonX @ upperNonX @ newConstrs
 
 let fixpoint _ = raise (Failure "unimplemented")
 
 let contained clauses relation nums =
 	let strip (var, Constant num) = (var, num) in
-	let assignment params = nums |> map (fun x -> Constant x) |> unify params |> Option.map (map strip |- flip assoc) in
+	let assignment params = nums |> map (fun x -> Constant x) |> unify params |> mapOption (map strip |- flip assoc) in
 	let isFact clause = length clause.syms = 0 && clause.head.rel = relation && length clause.head.params = length nums in
-	let test constr = Option.map_default (evalConstr constr) false in
+	let test constr = option (evalConstr constr) false in
 	let testAll clause = for_all (assignment clause.head.params |> flip test) clause.constraints in
 	exists testAll (filter isFact clauses)
 
@@ -102,13 +101,13 @@ let test =
 	let open OUnit in
 
 	let testSimplify _ =
-		let expected = Some {lhs = PosConstr ["x", 3; "y", 1]; rhs = 3}
-		and actual = mkPosConstraint [1, "y"; 1, "x"; 2, "x"; -1, "z"; 1, "z"] GEQ 3 in
+		let expected = Some {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3} in
+		let actual = mkPosConstraint [1, "y"; 1, "x"; 2, "x"; -1, "z"; 1, "z"] GEQ 3 in
 		assert_equal expected actual
 
 	and testQElim _ =
-		let expected = [{lhs = UpperConstr "y"; rhs = 2}; {lhs = PosConstr ["y", 1]; rhs = 18}]
-		and actual = qElim "x" [{lhs = UpperConstr "x"; rhs = 5}; {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3}; {lhs = UpperConstr "y"; rhs = 2}] in
+		let expected = [{lhs = UpperConstr "y"; rhs = 2}; {lhs = PosConstr ["y", 1]; rhs = 18}] in
+		let actual = qElim "x" [{lhs = UpperConstr "x"; rhs = 5}; {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3}; {lhs = UpperConstr "y"; rhs = 2}] in
 		assert_equal expected actual
 
 	and testContains _ =
@@ -120,12 +119,12 @@ let test =
 			syms = [];
 			constraints = [
 				mkUpperBound "x" false 3;
-				Option.get (mkPosConstraint [1, "y"] GR 2)
+				mkPosConstraint [1, "y"] GR 2 |> getOption
 			]
-		}]
-		and shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
+		}] in
+		let shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
 		let check vals = assert_equal (shouldContain vals) (contained clauses "R" vals) in
-		iter check (repeat (of_enum (-4--6)) 3 |> n_cartesian_product)
+		iter check (repeat [-4;-3;-2;-1;0;1;2;3;4;5;6] 3 |> nCartesianProduct)
 
 	in
 

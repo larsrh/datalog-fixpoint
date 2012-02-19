@@ -1,6 +1,6 @@
-open Batteries_uni
 open List
 
+open MyBat
 open Datalog
 
 let some f = Some f
@@ -16,7 +16,35 @@ let rec repeat x = function
 | 0 -> []
 | n -> x :: repeat x (n-1)
 
-module M = Enum.WithMonad(Option.Monad)
+let rec groupBy f = function
+| [] -> []
+| x :: xs ->
+	let res = groupBy f xs in
+	let y = f x in
+	match lookup y res with
+	| None -> (y, [x]) :: res
+	| Some ys ->
+		let removed = remove_assoc y res in
+		(y, x :: ys) :: removed
+
+let mapOption f = function
+| Some y -> f y |> some
+| None -> None
+
+let option f x = function
+| Some y -> f y
+| None -> x
+
+let getOption = function
+| Some y -> y
+| None -> raise Not_found
+
+let rec foldLeftOption f acc = function
+| [] -> acc
+| x :: xs ->
+	match acc with
+	| Some y -> foldLeftOption f (f y x) xs
+	| None -> None
 
 let unify l1 l2 =
 	let combined = combine l1 l2
@@ -32,7 +60,7 @@ let unify l1 l2 =
 		| None -> Some ((v, param) :: constrs)
 		| Some binding when param = binding -> Some constrs
 		| Some _ -> None in
-	M.fold_monad f [] (enum combined)
+	foldLeftOption f (Some []) combined
 
 
 (** Tests **)

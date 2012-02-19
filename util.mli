@@ -8,6 +8,16 @@ val swap: 'a * 'b -> 'b * 'a
 
 val repeat: 'a -> int -> 'a list
 
+val groupBy: ('a -> 'b) -> 'a list -> ('b * 'a list) list
+
+val mapOption: ('a -> 'b) -> 'a option -> 'b option
+
+val option: ('a -> 'b) -> 'b -> 'a option -> 'b
+
+val getOption: 'a option -> 'a
+
+val foldLeftOption: ('a -> 'b -> 'a option) -> 'a option -> 'b list -> 'a option
+
 (*
 	Matches a list of atoms against another list of atoms. An atom can be a
 	variable or a value. This corresponds to a restricted form of unification
@@ -31,6 +41,5 @@ val repeat: 'a -> int -> 'a list
 	variable.
 *)
 val unify: 'a exp list -> 'a exp list -> (var * 'a exp) list option
-
 
 val test: OUnit.test

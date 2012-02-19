@@ -1,1 +1,1 @@
-<*>: package(batteries), thread, package(batteries.syntax), syntax(camlp4o), package(oUnit)
+<*>: package(oUnit)
