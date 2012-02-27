@@ -62,6 +62,13 @@ let unify l1 l2 =
 		| Some _ -> None in
 	foldLeftOption f (Some []) combined
 
+module StringSet = Set.Make(String)
+
+module StringMap = Map.Make(String)
+
+type stringSet = StringSet.t
+
+type 'a stringMap = 'a StringMap.t
 
 (** Tests **)
 

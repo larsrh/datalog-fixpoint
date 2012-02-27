@@ -17,6 +17,12 @@ val option: ('a -> 'b) -> 'b -> 'a option -> 'b
 val getOption: 'a option -> 'a
 
 val foldLeftOption: ('a -> 'b -> 'a option) -> 'a option -> 'b list -> 'a option
+ 
+module StringSet: Set.S with type elt = string
+module StringMap: Map.S with type key = string
+
+type stringSet = StringSet.t
+type 'a stringMap = 'a StringMap.t
 
 (*
 	Matches a list of atoms against another list of atoms. An atom can be a

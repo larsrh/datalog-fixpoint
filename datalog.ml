@@ -24,4 +24,4 @@ module type Datalog = sig
 
 	val contained: clause list -> relation -> number list -> bool
 
-end;;
+end
