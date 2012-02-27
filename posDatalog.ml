@@ -2,6 +2,7 @@ open List
 
 open MyBat
 open Util
+open Unification
 open Datalog
 
 type number = int

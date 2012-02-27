@@ -6,6 +6,7 @@ open Util
 let suite =
 	"Tests" >::: [
 		Util.test;
+		Unification.test;
 		PosDatalog.test
 	]
 
