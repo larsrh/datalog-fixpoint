@@ -16,22 +16,6 @@ type 'a mapping = {
 	equalities: 'a equality list
 }
 
-let unify l1 l2 =
-	let combined = combine l1 l2 in
-	let f constrs = function
-	| Constant c1, Constant c2 ->
-		if c1 = c2
-			then Some constrs
-			else None
-	| Constant c, Variable _ ->
-		None
-	| Variable v, param ->
-		match lookup v constrs with
-		| None -> Some ((v, param) :: constrs)
-		| Some binding when param = binding -> Some constrs
-		| Some _ -> None in
-	foldLeftOption f (Some []) combined
-
 (* Adds an equality to a given list of equalities. This operation is commutative. *)
 let addEquality (eqs: 'a equality list) (e1: 'a exp) (e2: 'a exp) =
 
@@ -108,7 +92,26 @@ let addEquality (eqs: 'a equality list) (e1: 'a exp) (e2: 'a exp) =
 	| Constant c, Variable v -> constant_variable c v
 	| Variable v, Constant c -> constant_variable c v
 	| Variable v1, Variable v2 -> variable_variable v1 v2
-	
+
+let unify l1 l2 =
+	let combined = combine l1 l2 in
+	let f mapping =
+		let addEq e1 e2 = addEquality mapping.equalities e1 e2 |> mapOption (fun eqs -> {mapping with equalities = eqs}) in
+		let addAss v e = Some {mapping with assignment = StringMap.add v e mapping.assignment} in
+		function
+		| Constant c1, Constant c2 ->
+			if c1 = c2
+				then Some mapping
+				else None
+		| Variable v, e ->
+			if StringMap.mem v mapping.assignment
+				then addEq e (StringMap.find v mapping.assignment)
+				else addAss v e
+		| c, v ->
+			addEq c v in
+
+	foldLeftOption f (Some {assignment = StringMap.empty; equalities = []}) combined
+
 
 let test = 
 	let open OUnit in

@@ -47,21 +47,13 @@ let mkUpperBound v inclusive b =
 	let op = if inclusive then GEQ else GR in
 	{lhs = UpperConstr v; rhs = translateRHS (-b) op}
 
-let evalConstr (constr: number constr) (assignment: var -> number) =
-	let eval (var, num) = num * assignment var in
+let evalConstr (constr: number constr) (assignment: number stringMap) =
+	let eval (var, num) = num * (StringMap.find var assignment) in
 	let lhs =
 		match constr.lhs with
 		| PosConstr pos -> fold_left (+) 0 (map eval pos)
-		| UpperConstr v -> -(assignment v) in
+		| UpperConstr v -> -(StringMap.find v assignment) in
 	lhs >= constr.rhs
-
-(* Substitutes occurences of variables in a constraint by other variables or
-   values and simplifies them accordingly. Returns `None' if the substitution
-   produces an unsatisfiable formula. *)
-(**let subst (mapping: (var * (var, number) either) list) (constr: number constr) =
-	let testUpper var = assoc 
-| Left 
-| Right var -> assoc **)
 
 (* Transforms -x >= b and c * x + d_i * y_i >= a into d_i * y_i >= a + c * b *)
 let removeX (x: var) (b: number) (constr: number posConstr) (a: number) =
@@ -88,8 +80,19 @@ let qElim (x: var) (constrs: number constr list) =
 let fixpoint _ = raise (Failure "unimplemented")
 
 let contained clauses relation nums =
-	let strip (var, Constant num) = (var, num) in
-	let assignment params = nums |> map (fun x -> Constant x) |> unify params |> mapOption (map strip |- flip assoc) in
+	let assignment params =
+		let f assgn (exp, num) = match exp with
+		| Constant c ->
+			if c = num
+				then Some assgn
+				else None
+		| Variable v ->
+			if StringMap.mem v assgn
+				then if StringMap.find v assgn = num
+					then Some assgn
+					else None
+				else Some (StringMap.add v num assgn) in
+		combine params nums |> foldLeftOption f (Some StringMap.empty) in
 	let isFact clause = length clause.syms = 0 && clause.head.rel = relation && length clause.head.params = length nums in
 	let test constr = option (evalConstr constr) false in
 	let testAll clause = for_all (assignment clause.head.params |> flip test) clause.constraints in

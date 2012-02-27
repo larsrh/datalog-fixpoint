@@ -13,7 +13,7 @@ type 'a mapping = {
 	equalities: 'a equality list
 }
 
-val unify: 'a exp list -> 'a exp list -> (var * 'a exp) list option
+val unify: 'a exp list -> 'a exp list -> 'a mapping option
 
 
 val test: OUnit.test
