@@ -108,9 +108,30 @@ let unify l1 l2 =
 				then addEq e (StringMap.find v mapping.assignment)
 				else addAss v e
 		| c, v ->
-			addEq c v in
+			addEq c v
+	in
 
 	foldLeftOption f (Some {assignment = StringMap.empty; equalities = []}) combined
+
+let rec mergeEqualities = function
+| [] -> Some []
+| eqs :: eqss ->
+	let rec f acc = function
+	| [] -> Some acc
+	| [_] -> Some acc
+	| x :: y :: xs -> match addEquality acc x y with
+		| None -> None
+		| Some res -> y :: xs |> f res
+	in
+
+	let mergeOne acc eq =
+		let vars = StringSet.elements eq.vars |> map (fun v -> Variable v) in
+		let number = (match eq.number with | None -> [] | Some n -> [Constant n]) in
+		vars @ number |> f acc
+	in
+
+	let mergeAll acc = foldLeftOption mergeOne acc eqs in
+	mergeEqualities eqss |> mergeAll
 
 
 let test = 
@@ -124,8 +145,15 @@ let test =
 
 	in
 
+	let testMergeEqualities _ =
+		assert_equal None (mergeEqualities [[{number = Some 3; vars = StringSet.singleton "y"}; {number = Some 4; vars = StringSet.singleton "x"}]; [{number = None; vars = fold_right StringSet.add ["x"; "y"] StringSet.empty}]]);
+		assert_equal (Some [{number = Some 3; vars = fold_right StringSet.add["x"; "y"] StringSet.empty}]) (mergeEqualities [[{number = Some 3; vars = StringSet.singleton "y"}; {number = Some 3; vars = StringSet.singleton "x"}]; [{number = None; vars = fold_right StringSet.add ["x"; "y"] StringSet.empty}]])
+
+	in
+
 	"Unification" >::: [
-		"addEquality" >:: testAddEquality
+		"addEquality" >:: testAddEquality;
+		"mergeEqualities" >:: testMergeEqualities
 	]
 (*
 	let testUnify _ =

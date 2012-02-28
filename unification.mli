@@ -15,5 +15,6 @@ type 'a mapping = {
 
 val unify: 'a exp list -> 'a exp list -> 'a mapping option
 
+val mergeEqualities: 'a equality list list -> 'a equality list option
 
 val test: OUnit.test
