@@ -2,6 +2,8 @@ type var = string
 
 type 'a exp = Constant of 'a | Variable of var
 
+type 'a result = Result of 'a | Tautology | Contradiction
+
 module StringSet = Set.Make(String)
 
 module StringMap = Map.Make(String)

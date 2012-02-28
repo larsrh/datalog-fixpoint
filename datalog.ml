@@ -20,6 +20,10 @@ module type Datalog = sig
 
 	val fixpoint: clause list -> clause list
 
+	val eval: number stringMap -> number constr -> bool
+
+	val substitute: number exp stringMap -> number constr -> number constr result
+
 	val contained: clause list -> relation -> number list -> bool
 
 end

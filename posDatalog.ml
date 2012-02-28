@@ -27,7 +27,7 @@ type clause = {
 	constraints: number constr list;
 }
 
-let simplify (constr: number posConstr) =
+let simplifyPos (constr: number posConstr) =
 	let grouped = groupBy fst constr in
 	let sumN (x, ns) = x, map snd ns |> fold_left (+) 0 in
 	let pos (_, n) = n > 0 in
@@ -39,7 +39,7 @@ let translateRHS b = function
 
 let mkPosConstraint cs op b =
 	let non_neg (_, x) = x >= 0 in
-	let simplified = map swap cs |> simplify in
+	let simplified = map swap cs |> simplifyPos in
 	if for_all non_neg simplified
 		then Some {lhs = PosConstr simplified; rhs = translateRHS b op}
 		else None
@@ -47,14 +47,6 @@ let mkPosConstraint cs op b =
 let mkUpperBound v inclusive b =
 	let op = if inclusive then GEQ else GR in
 	{lhs = UpperConstr v; rhs = translateRHS (-b) op}
-
-let evalConstr (constr: number constr) (assignment: number stringMap) =
-	let eval (var, num) = num * (StringMap.find var assignment) in
-	let lhs =
-		match constr.lhs with
-		| PosConstr pos -> fold_left (+) 0 (map eval pos)
-		| UpperConstr v -> -(StringMap.find v assignment) in
-	lhs >= constr.rhs
 
 (* Transforms -x >= b and c * x + d_i * y_i >= a into d_i * y_i >= a + c * b *)
 let removeX (x: var) (b: number) (constr: number posConstr) (a: number) =
@@ -74,11 +66,35 @@ let qElim (x: var) (constrs: number constr list) =
 	let pos, upper = partition isPos constrs in
 	let posX, posNonX = partition containsX pos in
 	let upperX, upperNonX = partition containsX upper in
-	let elim ({lhs = PosConstr pos; rhs = a}, {rhs = b}) = removeX x b pos a in
+	let elim ({lhs = PosConstr pos; rhs = a}, {rhs = b}) = removeX x b pos a in (* TODO use proper simplification *)
 	let newConstrs = cartesianProduct posX upperX |> map elim in
 	posNonX @ upperNonX @ newConstrs
 
+let eval assignment constr =
+	let eval (var, num) = num * (StringMap.find var assignment) in
+	let lhs =
+		match constr.lhs with
+		| PosConstr pos -> fold_left (+) 0 (map eval pos)
+		| UpperConstr v -> -(StringMap.find v assignment) in
+	lhs >= constr.rhs
+
 let fixpoint _ = raise (Failure "unimplemented")
+
+let substitute assignment constr = match constr.lhs with
+| PosConstr pos ->
+	let f (acc, sum) (var, num) = match StringMap.find var assignment with
+	| Constant c -> acc, sum + c
+	| Variable v -> (v, num) :: acc, sum in
+	let acc, sum = fold_left f ([], 0) pos in
+	let rhs' = constr.rhs - sum in
+	(match simplifyPos acc with
+	| [] when rhs' >= 0 -> Tautology
+	| [] -> Contradiction
+	| xs -> Result {lhs = PosConstr xs; rhs = rhs'})
+| UpperConstr upper -> match StringMap.find upper assignment with
+	| Constant c when -c >= constr.rhs -> Tautology
+	| Constant c -> Contradiction
+	| Variable v -> Result {constr with lhs = UpperConstr v}
 
 let contained clauses relation nums =
 	let assignment params =
@@ -96,7 +112,7 @@ let contained clauses relation nums =
 		combine params nums |> foldLeftOption f (Some StringMap.empty) in
 	let isFact clause = length clause.syms = 0 && clause.head.rel = relation && length clause.head.params = length nums in
 	let test constr = function
-	| Some assgn -> evalConstr constr assgn
+	| Some assgn -> eval assgn constr
 	| None -> false in
 	let testAll clause = for_all (assignment clause.head.params |> flip test) clause.constraints in
 	exists testAll (filter isFact clauses)
