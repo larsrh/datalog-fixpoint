@@ -127,13 +127,15 @@ let test =
 		let expected = Some {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3} in
 		let actual = mkPosConstraint [1, "y"; 1, "x"; 2, "x"; -1, "z"; 1, "z"] GEQ 3 in
 		assert_equal expected actual
+	in
 
-	and testQElim _ =
+	let testQElim _ =
 		let expected = [{lhs = UpperConstr "y"; rhs = 2}; {lhs = PosConstr ["y", 1]; rhs = 18}] in
 		let actual = qElim "x" [{lhs = UpperConstr "x"; rhs = 5}; {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3}; {lhs = UpperConstr "y"; rhs = 2}] in
 		assert_equal expected actual
+	in
 
-	and testContains _ =
+	let testContains _ =
 		let clauses = [{
 			head = {
 				rel = "R";
@@ -148,7 +150,6 @@ let test =
 		let shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
 		let check vals = assert_equal (shouldContain vals) (contained clauses "R" vals) in
 		iter check (repeat [-4;-3;-2;-1;0;1;2;3;4;5;6] 3 |> nCartesianProduct)
-
 	in
 
 	"PosDatalog" >::: [

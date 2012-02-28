@@ -27,10 +27,7 @@ let addEquality (eqs: 'a equality list) (e1: 'a exp) (e2: 'a exp) =
 	(* An equality constraint over two constants can only be satisfied if both
 	   are equal. In that case, no new constraint is generated. Otherwise,
 	   the whole set of equalities can't be satisfied any more. *)
-	let constant_constant c1 c2 =
-		if c1 = c2
-			then unchanged
-			else None
+	let constant_constant c1 c2 = None
 	in
 
 	(* An equality constraint over a variable and a constant is satisfiable if
@@ -77,11 +74,13 @@ let addEquality (eqs: 'a equality list) (e1: 'a exp) (e2: 'a exp) =
 							else None
 	in
 
-	match e1, e2 with
-	| Constant c1, Constant c2 -> constant_constant c1 c2
-	| Constant c, Variable v -> constant_variable c v
-	| Variable v, Constant c -> constant_variable c v
-	| Variable v1, Variable v2 -> variable_variable v1 v2
+	if e1 = e2
+		then unchanged
+		else match e1, e2 with
+			| Constant c1, Constant c2 -> constant_constant c1 c2
+			| Constant c, Variable v -> constant_variable c v
+			| Variable v, Constant c -> constant_variable c v
+			| Variable v1, Variable v2 -> variable_variable v1 v2
 
 let unify l1 l2 =
 	let combined = combine l1 l2 in
