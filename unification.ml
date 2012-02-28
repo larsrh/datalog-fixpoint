@@ -133,6 +133,24 @@ let rec mergeEqualities = function
 	let mergeAll acc = foldLeftOption mergeOne acc eqs in
 	mergeEqualities eqss |> mergeAll
 
+let canonicalizeVars eqs =
+	let open StringSet in
+	let vars =
+		let f acc eq = union acc eq.vars in
+		fold_left f empty eqs in
+
+	let canonical (map, vars) eq =
+		let addAll map keys binding = fold_right (fun v -> StringMap.add v binding) keys map in
+		match eq.number with
+		| Some n ->
+			Constant n |> addAll map (elements eq.vars), vars
+		| None ->
+			let fresh = freshVar vars in
+			Variable fresh |> addAll map (elements eq.vars), add fresh vars
+	in
+
+	fold_left canonical (StringMap.empty, vars) eqs |> fst
+
 
 let test = 
 	let open OUnit in
@@ -151,9 +169,15 @@ let test =
 
 	in
 
+	let testCanonicalizeVars _ =
+		assert_equal ~cmp:(StringMap.equal (=)) (fold_right2 StringMap.add ["x"; "y"; "z"] [Variable "z_"; Variable "z_"; Constant 3] StringMap.empty) (canonicalizeVars [{number = None; vars = fold_right StringSet.add ["x"; "y"] StringSet.empty}; {number = Some 3; vars = StringSet.singleton "z"}])
+
+	in
+
 	"Unification" >::: [
 		"addEquality" >:: testAddEquality;
-		"mergeEqualities" >:: testMergeEqualities
+		"mergeEqualities" >:: testMergeEqualities;
+		"canonicalizeVars" >:: testCanonicalizeVars
 	]
 (*
 	let testUnify _ =
