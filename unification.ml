@@ -149,36 +149,29 @@ let test =
 		assert_equal (Some [{number = Some 3; vars = StringSet.singleton "x"}]) (addEquality [] (Constant 3) (Variable "x"));
 		assert_equal (Some [{number = None; vars = fold_right StringSet.add ["y"; "x"] StringSet.empty}]) (addEquality [{number = None; vars = StringSet.singleton "x"}] (Variable "y") (Variable "x"));
 		assert_equal (Some [{number = None; vars = fold_right StringSet.add ["x"; "y"] StringSet.empty}]) (addEquality [{number = None; vars = StringSet.singleton "x"}; {number = None; vars = StringSet.singleton "y"}] (Variable "y") (Variable "x"))
-
 	in
 
 	let testMergeEqualities _ =
 		assert_equal None (mergeEqualities [[{number = Some 3; vars = StringSet.singleton "y"}; {number = Some 4; vars = StringSet.singleton "x"}]; [{number = None; vars = fold_right StringSet.add ["x"; "y"] StringSet.empty}]]);
 		assert_equal (Some [{number = Some 3; vars = fold_right StringSet.add["x"; "y"] StringSet.empty}]) (mergeEqualities [[{number = Some 3; vars = StringSet.singleton "y"}; {number = Some 3; vars = StringSet.singleton "x"}]; [{number = None; vars = fold_right StringSet.add ["x"; "y"] StringSet.empty}]])
-
 	in
 
 	let testCanonicalizeVars _ =
 		assert_equal ~cmp:(StringMap.equal (=)) (fold_right2 StringMap.add ["x"; "y"; "z"] [Variable "z_"; Variable "z_"; Constant 3] StringMap.empty) (canonicalizeVars [{number = None; vars = fold_right StringSet.add ["x"; "y"] StringSet.empty}; {number = Some 3; vars = StringSet.singleton "z"}])
+	in
 
+	let testUnify _ =
+		assert_equal (Some {assignment = StringMap.singleton "a" (Variable "a"); equalities = [{number = None; vars = fold_right StringSet.add ["b"; "a"] StringSet.empty}]}) (unify [Variable "a"; Variable "a"] [Variable "a"; Variable "b"]);
+		assert_equal (Some {assignment = StringMap.singleton "b" (Variable "a"); equalities = []}) (unify [Variable "b"; Variable "b"] [Variable "a"; Variable "a"]);
+		assert_equal (Some {assignment = StringMap.singleton "a" (Constant 3); equalities = []}) (unify [Variable "a"; Variable "a"] [Constant 3; Constant 3]);
+		assert_equal None (unify [Constant 0] [Constant 1]);
+		assert_equal (Some {assignment = StringMap.empty; equalities = []}) (unify [Constant 0] [Constant 0]);
+		assert_equal (Some {assignment = fold_right2 StringMap.add ["y"; "x"] [Constant 1; Variable "u"] StringMap.empty; equalities = [{number = Some 0; vars = fold_right StringSet.add ["v"; "u"] StringSet.empty}]}) (unify [Variable "x"; Variable "x"; Variable "y"; Constant 0] [Variable "u"; Variable "v"; Constant 1; Variable "v"])
 	in
 
 	"Unification" >::: [
 		"addEquality" >:: testAddEquality;
 		"mergeEqualities" >:: testMergeEqualities;
-		"canonicalizeVars" >:: testCanonicalizeVars
-	]
-(*
-	let testUnify _ =
-		assert_equal None (unify [Variable "a"; Variable "a"] [Variable "a"; Variable "b"]);
-		assert_equal (Some ["b", Variable "a"]) (unify [Variable "b"; Variable "b"] [Variable "a"; Variable "a"]);
-		assert_equal (Some ["a", Constant 3]) (unify [Variable "a"; Variable "a"] [Constant 3; Constant 3]);
-		assert_equal (Some ["d", Variable "a"; "c", Variable "a"]) (unify [Variable "c"; Variable "d"] [Variable "a"; Variable "a"]);
-		assert_equal None (unify [Constant 0] [Constant 1]);
-		assert_equal (Some []) (unify [Constant 0] [Constant 0])
-
-	in
-
-	"Util" >::: [
+		"canonicalizeVars" >:: testCanonicalizeVars;
 		"unify" >:: testUnify
-	]*)
+	]
