@@ -2,6 +2,7 @@ open List
 
 open MyBat
 open Util
+open Types
 open Unification
 open Datalog
 
@@ -94,7 +95,9 @@ let contained clauses relation nums =
 				else Some (StringMap.add v num assgn) in
 		combine params nums |> foldLeftOption f (Some StringMap.empty) in
 	let isFact clause = length clause.syms = 0 && clause.head.rel = relation && length clause.head.params = length nums in
-	let test constr = option (evalConstr constr) false in
+	let test constr = function
+	| Some assgn -> evalConstr constr assgn
+	| None -> false in
 	let testAll clause = for_all (assignment clause.head.params |> flip test) clause.constraints in
 	exists testAll (filter isFact clauses)
 

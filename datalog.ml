@@ -1,8 +1,6 @@
-type var = string
+open Types
 
 type relation = string
-
-type 'a exp = Constant of 'a | Variable of var
 
 type 'a symbol = {
 	rel: relation;

@@ -1,4 +1,5 @@
 open Datalog
+open Types
 
 include Datalog with type number = int
 

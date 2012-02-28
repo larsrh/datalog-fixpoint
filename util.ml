@@ -31,10 +31,6 @@ let mapOption f = function
 | Some y -> f y |> some
 | None -> None
 
-let option f x = function
-| Some y -> f y
-| None -> x
-
 let getOption = function
 | Some y -> y
 | None -> raise Not_found
@@ -46,14 +42,6 @@ let rec foldLeftOption f acc = function
 	| Some y -> foldLeftOption f (f y x) xs
 	| None -> None
 
-
-module StringSet = Set.Make(String)
-
-module StringMap = Map.Make(String)
-
-type stringSet = StringSet.t
-
-type 'a stringMap = 'a StringMap.t
 
 (** Tests **)
 

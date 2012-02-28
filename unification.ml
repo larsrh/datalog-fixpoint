@@ -1,20 +1,10 @@
 open List
 
-open Datalog
+open Types
 open MyBat
 open Util
 
 let freshVar set = StringSet.max_elt set ^ "_"
-
-type 'a equality = {
-	number: 'a option;
-	vars: stringSet
-}
-
-type 'a mapping = {
-	assignment: 'a exp stringMap;
-	equalities: 'a equality list
-}
 
 (* Adds an equality to a given list of equalities. This operation is commutative. *)
 let addEquality (eqs: 'a equality list) (e1: 'a exp) (e2: 'a exp) =
