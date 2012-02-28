@@ -13,4 +13,4 @@ clean:
 	$(OCAMLBUILD) -clean
 
 package:
-	zip impl.zip *.ml* _tags Makefile
+	git archive --format zip --output impl.zip --prefix datalog/ HEAD
