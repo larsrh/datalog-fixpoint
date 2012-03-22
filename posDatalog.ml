@@ -6,8 +6,6 @@ open Types
 open Unification
 open Datalog
 
-type number = int
-
 type op = GEQ | GR
 
 type 'a posConstr = (var * 'a) list
@@ -15,17 +13,31 @@ type upperConstr = var
 
 type 'a lhs = PosConstr of 'a posConstr | UpperConstr of upperConstr
 
-(* GR will be transformed into GEQ *)
-type 'a constr = {
-	lhs: 'a lhs;
-	rhs: 'a
-}
+module PosTypes = struct
 
-type clause = {
-	head: number symbol;
-	syms: number symbol list;
-	constraints: number constr list;
-}
+	type number = int
+
+	(* GR will be transformed into GEQ *)
+	type 'a constr = {
+		lhs: 'a lhs;
+		rhs: 'a
+	}
+
+	type clause = {
+		head: number symbol;
+		syms: number symbol list;
+		constraints: number constr list;
+	}
+
+	let constrVars constr = match constr.lhs with
+	| PosConstr pos -> fold_right StringSet.add (map fst pos) StringSet.empty
+	| UpperConstr v -> StringSet.singleton v
+
+end
+
+include PosTypes
+module M = Make(PosTypes)
+open M
 
 let simplifyPos (constr: number posConstr) =
 	let grouped = groupBy fst constr in
@@ -59,10 +71,7 @@ let qElim (x: var) (constrs: number constr list) =
 		match c.lhs with
 		| PosConstr _ -> true
 		| UpperConstr _ -> false in
-	let containsX c = 
-		match c.lhs with
-		| PosConstr pos -> map fst pos |> mem x
-		| UpperConstr v -> v = x in
+	let containsX c = constrVars c |> StringSet.mem x in
 	let pos, upper = partition isPos constrs in
 	let posX, posNonX = partition containsX pos in
 	let upperX, upperNonX = partition containsX upper in
@@ -110,12 +119,12 @@ let contained clauses relation nums =
 					else None
 				else Some (StringMap.add v num assgn) in
 		combine params nums |> foldLeftOption f (Some StringMap.empty) in
-	let isFact clause = length clause.syms = 0 && clause.head.rel = relation && length clause.head.params = length nums in
+	let eligible clause = isFact clause && clause.head.rel = relation && length clause.head.params = length nums in
 	let test constr = function
 	| Some assgn -> eval assgn constr
 	| None -> false in
 	let testAll clause = for_all (assignment clause.head.params |> flip test) clause.constraints in
-	exists testAll (filter isFact clauses)
+	exists testAll (filter eligible clauses)
 
 
 (** Tests **)

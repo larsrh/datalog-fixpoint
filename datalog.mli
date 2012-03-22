@@ -1,7 +1,4 @@
 open Types
-open Util
-open List
-open MyBat
 
 type relation = string
 
@@ -10,11 +7,7 @@ type 'a symbol = {
 	params: 'a exp list;
 }
 
-let symbolVars sym =
-	let variable = function
-	| Constant _ -> None
-	| Variable v -> Some v in
-	fold_right StringSet.add (collect variable sym.params) StringSet.empty
+val symbolVars: 'a symbol -> stringSet
 
 module type DatalogTypes = sig
 
@@ -31,16 +24,12 @@ module type DatalogTypes = sig
 
 end
 
-module Make(T: DatalogTypes) = struct
+module Make(T: DatalogTypes): sig
 
-	open T
+	val isFact: T.clause -> bool
+	val isRule: T.clause -> bool
 
-	let isFact clause = length clause.syms = 0
-	let isRule clause = not (isFact clause)
-
-	let quantifiedVars clause =
-		let allConstrVars = fold_right StringSet.union (map constrVars clause.constraints) StringSet.empty in
-		symbolVars clause.head |> StringSet.diff allConstrVars
+	val quantifiedVars: T.clause -> stringSet
 
 end
 
