@@ -1,14 +1,6 @@
 open List
 
 open MyBat
-open Datalog
-
-let some f = Some f
-
-let rec lookup elem = function
-| [] -> None
-| (x, y) :: xs when x = elem -> Some y
-| _ :: xs -> lookup elem xs
 
 let swap (x, y) = y, x
 
@@ -21,14 +13,25 @@ let rec groupBy f = function
 | x :: xs ->
 	let res = groupBy f xs in
 	let y = f x in
+	let rec lookup elem = function
+	| [] -> None
+	| (x, y) :: xs when x = elem -> Some y
+	| _ :: xs -> lookup elem xs in
 	match lookup y res with
 	| None -> (y, [x]) :: res
 	| Some ys ->
 		let removed = remove_assoc y res in
 		(y, x :: ys) :: removed
 
+let rec collect f = function
+| [] -> []
+| x :: xs ->
+	match f x with
+	| None -> collect f xs
+	| Some y -> y :: collect f xs
+
 let mapOption f = function
-| Some y -> f y |> some
+| Some y -> Some (f y)
 | None -> None
 
 let getOption = function
@@ -41,11 +44,3 @@ let rec foldLeftOption f acc = function
 	match acc with
 	| Some y -> foldLeftOption f (f y x) xs
 	| None -> None
-
-
-(** Tests **)
-
-let test =
-	let open OUnit in
-	"Util" >::: [
-	]
