@@ -140,6 +140,15 @@ let canonicalizeVars eqs =
 
 	fold_left canonical (StringMap.empty, vars) eqs |> fst
 
+let composeExpMap m1 m2 =
+	let f = function
+	| Constant c -> Constant c
+	| Variable v ->
+		if StringMap.mem v m2
+			then StringMap.find v m2
+			else Variable v in
+	StringMap.map f m1
+
 
 let test = 
 	let open OUnit in
@@ -157,7 +166,8 @@ let test =
 	in
 
 	let testCanonicalizeVars _ =
-		assert_equal ~cmp:(StringMap.equal (=)) (fold_right2 StringMap.add ["x"; "y"; "z"] [Variable "z_"; Variable "z_"; Constant 3] StringMap.empty) (canonicalizeVars [{number = None; vars = fold_right StringSet.add ["x"; "y"] StringSet.empty}; {number = Some 3; vars = StringSet.singleton "z"}])
+		assert_equal ~cmp:(StringMap.equal (=)) (fold_right2 StringMap.add ["x"; "y"; "z"] [Variable "z_"; Variable "z_"; Constant 3] StringMap.empty) (canonicalizeVars [{number = None; vars = fold_right StringSet.add ["x"; "y"] StringSet.empty}; {number = Some 3; vars = StringSet.singleton "z"}]);
+		assert_equal ~cmp:(StringMap.equal (=)) (fold_right2 StringMap.add ["u"; "v"] [Constant 0; Constant 0] StringMap.empty) (canonicalizeVars [{number = Some 0; vars = fold_right StringSet.add ["v"; "u"] StringSet.empty}])
 	in
 
 	let testUnify _ =
@@ -169,9 +179,18 @@ let test =
 		assert_equal (Some {assignment = fold_right2 StringMap.add ["y"; "x"] [Constant 1; Variable "u"] StringMap.empty; equalities = [{number = Some 0; vars = fold_right StringSet.add ["v"; "u"] StringSet.empty}]}) (unify [Variable "x"; Variable "x"; Variable "y"; Constant 0] [Variable "u"; Variable "v"; Constant 1; Variable "v"])
 	in
 
+	let testComposeExpMap _ =
+		assert_equal ~cmp:(StringMap.equal (=))
+			(fold_right2 StringMap.add ["y"; "x"] [Constant 1; Constant 0] StringMap.empty)
+			(composeExpMap
+				(fold_right2 StringMap.add ["y"; "x"] [Constant 1; Variable "u"] StringMap.empty)
+				(fold_right2 StringMap.add ["u"; "v"] [Constant 0; Constant 0] StringMap.empty))
+	in
+
 	"Unification" >::: [
 		"addEquality" >:: testAddEquality;
 		"mergeEqualities" >:: testMergeEqualities;
 		"canonicalizeVars" >:: testCanonicalizeVars;
-		"unify" >:: testUnify
+		"unify" >:: testUnify;
+		"composeExpMap" >:: testComposeExpMap
 	]
