@@ -34,13 +34,22 @@ let mapOption f = function
 | Some y -> Some (f y)
 | None -> None
 
+let bindOption f = function
+| Some y -> f y
+| None -> None
+
 let getOption = function
 | Some y -> y
 | None -> raise Not_found
 
 let rec foldLeftOption f acc = function
 | [] -> acc
-| x :: xs ->
-	match acc with
-	| Some y -> foldLeftOption f (f y x) xs
-	| None -> None
+| x :: xs -> bindOption (fun y -> foldLeftOption f (f y x) xs) acc
+
+let rec foldRightOption f list acc = match list with
+| [] -> acc
+| x :: xs -> bindOption (f x) (foldRightOption f xs acc)
+
+let sequenceList list =
+	let f x acc = mapOption (fun y -> y :: acc) x in
+	Some [] |> foldRightOption f list
