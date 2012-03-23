@@ -117,6 +117,50 @@ let substitute assignment constr = match constr.lhs with
 	| Constant c -> Contradiction
 	| Variable v -> Result {constr with lhs = UpperConstr v}
 
+(* produces a list of facts which can be derived from all facts in `clauses' and the specified `rule' *)
+let applyRule (clauses: clause list) (rule: clause) =
+	(* a fact is eligible for a symbol if the relation name and the arity match *)
+	let findFacts sym = filterClauses sym.rel (length sym.params) clauses |> filter isFact in
+
+	(* a list of all possible matching facts for each symbol in the rule *)
+	let facts = map findFacts rule.syms in
+
+	(* generate all possible tuples *)
+	let product = nCartesianProduct facts in
+
+	let solve tuple =
+		let tupleParams = map (fun c -> c.head.params) tuple in
+		let ownParams = map (fun s -> s.params) rule.syms in
+		combine tupleParams ownParams |> map (fun (x, y) -> unify x y) |> sequenceList |> bindOption (fun mappings ->
+			map (fun m -> m.equalities) mappings |> mergeEqualities |> bindOption (fun equalities ->
+				let canonical = canonicalizeVars equalities in
+				let assignments = map (fun m -> composeExpMap m.assignment canonical) mappings in
+
+				(* get rid of tautologies *)
+				let filterConstraint = function
+				| Tautology -> None
+				| Contradiction -> Some None
+				| Result r -> Some (Some r) in
+
+				let substituteAll (assignment, clause) = map (substitute assignment) clause.constraints in
+				let tupleConstraints = combine assignments tuple |> map substituteAll |> concat in
+				let ownConstraints = map (substitute canonical) rule.constraints in
+				ownConstraints @ tupleConstraints |> collect filterConstraint |> sequenceList |> mapOption (fun constraints ->
+					let elim var constrs =
+						if StringMap.mem var canonical
+							then match (StringMap.find var canonical) with
+							| Constant _ -> constrs
+							| Variable v -> qElim v constrs
+							else constrs in
+					let eliminated = StringSet.fold elim (quantifiedVars rule) constraints in
+					let params = map (substituteExp canonical) rule.head.params in
+					{head = {rule.head with params = params}; syms = []; constraints = eliminated}
+				)
+			)
+		) in
+
+	collect solve product
+
 let contained clauses relation nums =
 	let assignment params =
 		let f assgn (exp, num) = match exp with
@@ -157,23 +201,41 @@ let test =
 
 	let testContains _ =
 		let clauses = [{
-			head = {
-				rel = "R";
-				params = [Variable "x"; Variable "y"; Constant 5]
-			};
+			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
 			syms = [];
-			constraints = [
-				mkUpperBound "x" false 3;
-				mkPosConstraint [1, "y"] GR 2 |> getOption
-			]
+			constraints = [mkUpperBound "x" false 3; mkPosConstraint [1, "y"] GR 2 |> getOption]
 		}] in
 		let shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
 		let check vals = assert_equal (shouldContain vals) (contained clauses "R" vals) in
 		iter check (repeat [-4;-3;-2;-1;0;1;2;3;4;5;6] 3 |> nCartesianProduct)
 	in
 
+	let testApplyRule _ =
+		let facts = [{
+			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
+			syms = [];
+			constraints = [mkUpperBound "x" false 6; mkPosConstraint [1, "y"] GR 2 |> getOption]
+		}; {
+			head = {rel = "T"; params = [Variable "x"; Variable "x"]};
+			syms = [];
+			constraints = []
+		}] in
+		let rule = {
+			head = {rel = "S"; params = [Variable "z"]};
+			syms = [{rel = "R"; params = [Variable "s"; Variable "s"; Variable "z"]}; {rel = "T"; params = [Variable "s"; Variable "z"]}];
+			constraints = [mkUpperBound "z" false 10]
+		} in
+		let clauses = rule :: facts in
+		assert_equal [{
+			head = {rel = "S"; params = [Constant 5]};
+			syms = [];
+			constraints = []
+		}] (applyRule clauses rule)
+	in
+
 	"PosDatalog" >::: [
 		"simplify" >:: testSimplify;
 		"qElim" >:: testQElim;
-		"contains" >:: testContains
+		"contains" >:: testContains;
+		"applyRule" >:: testApplyRule
 	]
