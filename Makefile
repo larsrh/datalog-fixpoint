@@ -1,6 +1,7 @@
 all: build
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind
+DEBUG=main.byte
 FILE=main.native
 
 build:
@@ -8,6 +9,10 @@ build:
 
 run:
 	$(OCAMLBUILD) $(FILE) --
+
+debug:
+	$(OCAMLBUILD) -tag debug $(DEBUG)
+	rlwrap ocamldebug -I _build $(DEBUG)
 
 clean:
 	$(OCAMLBUILD) -clean
