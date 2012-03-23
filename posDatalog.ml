@@ -109,7 +109,7 @@ let substitute assignment constr = match constr.lhs with
 	let acc, sum = fold_left f ([], 0) pos in
 	let rhs' = constr.rhs - sum in
 	(match simplifyPos acc with
-	| [] when rhs' >= 0 -> Tautology
+	| [] when rhs' <= 0 -> Tautology
 	| [] -> Contradiction
 	| xs -> Result {lhs = PosConstr xs; rhs = rhs'})
 | UpperConstr upper -> match StringMap.find upper assignment with
