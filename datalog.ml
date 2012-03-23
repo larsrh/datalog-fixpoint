@@ -16,6 +16,15 @@ let symbolVars sym =
 	| Variable v -> Some v in
 	fold_right StringSet.add (collect variable sym.params) StringSet.empty
 
+let substituteExp map = function
+| Constant c -> Constant c
+| Variable v ->
+	if StringMap.mem v map
+		then StringMap.find v map
+		else Variable v
+
+let composeExpMap m1 m2 = StringMap.map (substituteExp m2) m1
+
 module type DatalogTypes = sig
 
 	type number
@@ -57,3 +66,19 @@ module type Datalog = sig
 	val contained: clause list -> relation -> number list -> bool
 
 end
+
+
+let test =
+	let open OUnit in
+
+	let testComposeExpMap _ =
+		assert_equal ~cmp:(StringMap.equal (=))
+			(fold_right2 StringMap.add ["y"; "x"] [Constant 1; Constant 0] StringMap.empty)
+			(composeExpMap
+				(fold_right2 StringMap.add ["y"; "x"] [Constant 1; Variable "u"] StringMap.empty)
+				(fold_right2 StringMap.add ["u"; "v"] [Constant 0; Constant 0] StringMap.empty))
+	in
+
+	"Datalog" >::: [
+		"composeExpMap" >:: testComposeExpMap
+	]

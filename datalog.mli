@@ -9,6 +9,10 @@ type 'a symbol = {
 
 val symbolVars: 'a symbol -> stringSet
 
+val substituteExp: 'a exp stringMap -> 'a exp -> 'a exp
+
+val composeExpMap: 'a exp stringMap -> 'a exp stringMap -> 'a exp stringMap
+
 module type DatalogTypes = sig
 
 	type number
@@ -46,3 +50,6 @@ module type Datalog = sig
 	val contained: clause list -> relation -> number list -> bool
 
 end
+
+
+val test: OUnit.test
