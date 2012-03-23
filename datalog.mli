@@ -35,6 +35,8 @@ module Make(T: DatalogTypes): sig
 
 	val quantifiedVars: T.clause -> stringSet
 
+	val filterClauses: relation -> int -> T.clause list -> T.clause list
+
 end
 
 module type Datalog = sig

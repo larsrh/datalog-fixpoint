@@ -51,6 +51,10 @@ module Make(T: DatalogTypes) = struct
 		let allConstrVars = fold_right StringSet.union (map constrVars clause.constraints) StringSet.empty in
 		symbolVars clause.head |> StringSet.diff allConstrVars
 
+	let filterClauses rel arity =
+		let eligible clause = clause.head.rel = rel && length clause.head.params = arity in
+		filter eligible
+
 end
 
 module type Datalog = sig

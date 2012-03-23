@@ -119,12 +119,11 @@ let contained clauses relation nums =
 					else None
 				else Some (StringMap.add v num assgn) in
 		combine params nums |> foldLeftOption f (Some StringMap.empty) in
-	let eligible clause = isFact clause && clause.head.rel = relation && length clause.head.params = length nums in
 	let test constr = function
 	| Some assgn -> eval assgn constr
 	| None -> false in
 	let testAll clause = for_all (assignment clause.head.params |> flip test) clause.constraints in
-	exists testAll (filter eligible clauses)
+	filterClauses relation (length nums) clauses |> filter isFact |> exists testAll
 
 
 (** Tests **)
