@@ -77,7 +77,9 @@ module Make(T: DatalogTypes) = struct
 				then (map showNumSymbol clause.syms |> String.concat ", ") ^ ", "
 				else "" in
 		let constrs = map showConstr clause.constraints |> String.concat ", " in
-		head ^ " :- " ^ syms ^ constrs
+		if String.length syms > 0 || String.length constrs > 0
+			then head ^ " :- " ^ syms ^ constrs ^ "."
+			else head ^ "."
 
 end
 
