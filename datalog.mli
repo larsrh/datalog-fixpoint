@@ -7,6 +7,10 @@ type 'a symbol = {
 	params: 'a exp list;
 }
 
+val showExp: ('a -> string) -> 'a exp -> string
+
+val showSymbol: ('a -> string) -> 'a symbol -> string
+
 val symbolVars: 'a symbol -> stringSet
 
 val substituteExp: 'a exp stringMap -> 'a exp -> 'a exp
@@ -26,6 +30,10 @@ module type DatalogTypes = sig
 
 	val constrVars: number constr -> stringSet
 
+	val showNumber: number -> string
+
+	val showConstr: number constr -> string
+
 end
 
 module Make(T: DatalogTypes): sig
@@ -36,6 +44,12 @@ module Make(T: DatalogTypes): sig
 	val quantifiedVars: T.clause -> stringSet
 
 	val filterClauses: relation -> int -> T.clause list -> T.clause list
+
+	val showNumExp: T.number exp -> string
+
+	val showNumSymbol: T.number symbol -> string
+
+	val showClause: T.clause -> string
 
 end
 

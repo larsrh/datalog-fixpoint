@@ -10,6 +10,14 @@ type 'a symbol = {
 	params: 'a exp list;
 }
 
+let showExp f = function
+| Constant c -> f c
+| Variable v -> v
+
+let showSymbol f sym =
+	let params = map (showExp f) sym.params |> String.concat "," in
+	sym.rel ^ "(" ^ params ^ ")"
+
 let symbolVars sym =
 	let variable = function
 	| Constant _ -> None
@@ -38,6 +46,10 @@ module type DatalogTypes = sig
 
 	val constrVars: number constr -> stringSet
 
+	val showNumber: number -> string
+
+	val showConstr: number constr -> string
+
 end
 
 module Make(T: DatalogTypes) = struct
@@ -54,6 +66,18 @@ module Make(T: DatalogTypes) = struct
 	let filterClauses rel arity =
 		let eligible clause = clause.head.rel = rel && length clause.head.params = arity in
 		filter eligible
+
+	let showNumExp = showExp showNumber
+	let showNumSymbol = showSymbol showNumber
+
+	let showClause clause =
+		let head = showNumSymbol clause.head in
+		let syms =
+			if length clause.syms > 0
+				then (map showNumSymbol clause.syms |> String.concat ", ") ^ ", "
+				else "" in
+		let constrs = map showConstr clause.constraints |> String.concat ", " in
+		head ^ " :- " ^ syms ^ constrs
 
 end
 

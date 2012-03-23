@@ -33,6 +33,18 @@ module PosTypes = struct
 	| PosConstr pos -> fold_right StringSet.add (map fst pos) StringSet.empty
 	| UpperConstr v -> StringSet.singleton v
 
+	let showNumber = string_of_int
+
+	let showConstr constr = match constr.lhs with
+	| PosConstr pos ->
+		let f (v, n) = string_of_int n ^ "*" ^ v in
+		let lhs = if length pos > 0
+			then map f pos |> String.concat " + "
+			else "0" in
+		lhs ^ " >= " ^ string_of_int constr.rhs
+	| UpperConstr v ->
+		v ^ " <= " ^ string_of_int (-constr.rhs)
+
 end
 
 include PosTypes
