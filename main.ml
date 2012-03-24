@@ -1,4 +1,1 @@
-let main _ =
-	Test.test ();;
-
-main ();;
+let _ = ()

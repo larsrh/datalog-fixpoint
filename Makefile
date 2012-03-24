@@ -10,6 +10,9 @@ build:
 run:
 	$(OCAMLBUILD) $(FILE) --
 
+test:
+	$(OCAMLBUILD) test.native --
+
 debug:
 	$(OCAMLBUILD) -tag debug $(DEBUG)
 	rlwrap ocamldebug -I _build $(DEBUG)

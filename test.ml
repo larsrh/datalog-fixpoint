@@ -10,6 +10,6 @@ let suite =
 		PosDatalog.test
 	]
 
-let test _ =
+let _ =
 	let unit _ = () in
 	run_test_tt_main suite |> unit
