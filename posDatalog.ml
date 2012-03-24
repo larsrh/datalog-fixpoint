@@ -99,8 +99,6 @@ let eval assignment constr =
 		| UpperConstr v -> -(StringMap.find v assignment) in
 	lhs >= constr.rhs
 
-let fixpoint _ = raise (Failure "unimplemented")
-
 let substitute assignment constr = match constr.lhs with
 | PosConstr pos ->
 	let f (acc, sum) (var, num) = match StringMap.find var assignment with
@@ -160,6 +158,15 @@ let applyRule (clauses: clause list) (rule: clause) =
 		) in
 
 	collect solve product
+
+let rec fixpoint clauses =
+	let rules = filter isRule clauses in
+	let newFacts = map (applyRule clauses) rules |> concat in
+	let f acc fact = if mem fact acc then acc else fact :: acc in
+	let inserted = fold_left f clauses newFacts in
+	if length inserted > length clauses
+		then fixpoint inserted
+		else clauses
 
 let contained clauses relation nums =
 	let assignment params =
@@ -233,9 +240,40 @@ let test =
 		}] (applyRule clauses rule)
 	in
 
+	let testFixpoint _ =
+		let clauses = [{
+			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
+			syms = [];
+			constraints = [mkUpperBound "x" false 6; mkPosConstraint [1, "y"] GR 2 |> getOption]
+		}; {
+			head = {rel = "T"; params = [Variable "x"; Variable "x"]};
+			syms = [];
+			constraints = []
+		}; {
+			head = {rel = "S"; params = [Variable "z"]};
+			syms = [{rel = "R"; params = [Variable "s"; Variable "s"; Variable "z"]}; {rel = "T"; params = [Variable "s"; Variable "z"]}];
+			constraints = [mkUpperBound "z" false 10]
+		}; {
+			head = {rel = "U"; params = [Variable "r"]};
+			syms = [{rel = "S"; params = [Variable "r"]}];
+			constraints = [mkUpperBound "r" false 9]
+		}] in
+		let newFacts = [{
+			head = {rel = "U"; params = [Constant 5]};
+			syms = [];
+			constraints = []
+		}; {
+			head = {rel = "S"; params = [Constant 5]};
+			syms = [];
+			constraints = []
+		}] in
+		assert_equal (newFacts @ clauses) (fixpoint clauses)
+	in
+
 	"PosDatalog" >::: [
 		"simplify" >:: testSimplify;
 		"qElim" >:: testQElim;
 		"contains" >:: testContains;
-		"applyRule" >:: testApplyRule
+		"applyRule" >:: testApplyRule;
+		"fixpoint" >:: testFixpoint
 	]
