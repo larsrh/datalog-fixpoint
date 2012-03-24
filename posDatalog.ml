@@ -6,8 +6,6 @@ open Types
 open Unification
 open Datalog
 
-type op = GEQ | GR
-
 type 'a posConstr = (var * 'a) list
 type upperConstr = var
 
@@ -17,7 +15,6 @@ module PosTypes = struct
 
 	type number = int
 
-	(* GR will be transformed into GEQ *)
 	type 'a constr = {
 		lhs: 'a lhs;
 		rhs: 'a
@@ -57,20 +54,20 @@ let simplifyPos (constr: number posConstr) =
 	let pos (_, n) = n > 0 in
 	map sumN grouped |> filter pos
 
-let translateRHS b = function
-| GR -> b + 1
-| GEQ -> b
+let translateRHS b op =
+	if op
+		then b
+		else b + 1
 
-let mkPosConstraint cs op b =
+let mkPosConstraint cs inclusive b =
 	let non_neg (_, x) = x >= 0 in
 	let simplified = map swap cs |> simplifyPos in
 	if for_all non_neg simplified
-		then Some {lhs = PosConstr simplified; rhs = translateRHS b op}
+		then Some {lhs = PosConstr simplified; rhs = translateRHS b inclusive}
 		else None
 
 let mkUpperBound v inclusive b =
-	let op = if inclusive then GEQ else GR in
-	{lhs = UpperConstr v; rhs = translateRHS (-b) op}
+	{lhs = UpperConstr v; rhs = translateRHS (-b) inclusive}
 
 (* Transforms -x >= b and c * x + d_i * y_i >= a into d_i * y_i >= a + c * b *)
 let removeX (x: var) (b: number) (constr: number posConstr) (a: number) =
@@ -196,7 +193,7 @@ let test =
 
 	let testSimplify _ =
 		let expected = Some {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3} in
-		let actual = mkPosConstraint [1, "y"; 1, "x"; 2, "x"; -1, "z"; 1, "z"] GEQ 3 in
+		let actual = mkPosConstraint [1, "y"; 1, "x"; 2, "x"; -1, "z"; 1, "z"] true 3 in
 		assert_equal expected actual
 	in
 
@@ -210,7 +207,7 @@ let test =
 		let clauses = [{
 			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
 			syms = [];
-			constraints = [mkUpperBound "x" false 3; mkPosConstraint [1, "y"] GR 2 |> getOption]
+			constraints = [mkUpperBound "x" false 3; mkPosConstraint [1, "y"] false 2 |> getOption]
 		}] in
 		let shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
 		let check vals = assert_equal (shouldContain vals) (contained clauses "R" vals) in
@@ -221,7 +218,7 @@ let test =
 		let facts = [{
 			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
 			syms = [];
-			constraints = [mkUpperBound "x" false 6; mkPosConstraint [1, "y"] GR 2 |> getOption]
+			constraints = [mkUpperBound "x" false 6; mkPosConstraint [1, "y"] false 2 |> getOption]
 		}; {
 			head = {rel = "T"; params = [Variable "x"; Variable "x"]};
 			syms = [];
@@ -244,7 +241,7 @@ let test =
 		let clauses = [{
 			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
 			syms = [];
-			constraints = [mkUpperBound "x" false 6; mkPosConstraint [1, "y"] GR 2 |> getOption]
+			constraints = [mkUpperBound "x" false 6; mkPosConstraint [1, "y"] false 2 |> getOption]
 		}; {
 			head = {rel = "T"; params = [Variable "x"; Variable "x"]};
 			syms = [];
