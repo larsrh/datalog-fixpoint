@@ -23,14 +23,7 @@ rule token = parse
 
 {
 	let parse () =
-		let lines = ref [] in
-		try
-			let lexbuf = Lexing.from_channel stdin in
-			while true do
-				let line = Parser.clause token lexbuf in
-				lines := line :: !lines
-			done;
-			[] (* dummy *)
-		with Eof ->
-			!lines
+		let lexbuf = Lexing.from_channel stdin in
+		let f _ = Parser.clause token lexbuf in
+		Util.actionToList f Eof
 }

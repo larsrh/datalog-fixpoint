@@ -17,3 +17,5 @@ val foldLeftOption: ('a -> 'b -> 'a option) -> 'a option -> 'b list -> 'a option
 val foldRightOption: ('a -> 'b -> 'b option) -> 'a list -> 'b option -> 'b option
 
 val sequenceList: 'a option list -> 'a list option
+
+val actionToList: (unit -> 'a) -> exn -> 'a list

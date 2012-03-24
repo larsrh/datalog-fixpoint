@@ -53,3 +53,13 @@ let rec foldRightOption f list acc = match list with
 let sequenceList list =
 	let f x acc = mapOption (fun y -> y :: acc) x in
 	Some [] |> foldRightOption f list
+
+let actionToList action exn =
+	let vals = ref [] in
+	try
+		while true do
+			vals := action () :: !vals
+		done;
+		assert false
+	with e when e = exn ->
+		List.rev !vals
