@@ -56,12 +56,17 @@ module Make(T: DatalogTypes) = struct
 
 	open T
 
-	let isFact clause = length clause.syms = 0
+	let allConstrVars clause =
+		map constrVars clause.constraints |> fold_left StringSet.union StringSet.empty
+
+	let isFact clause =
+		length clause.syms = 0 &&
+		StringSet.subset (allConstrVars clause) (symbolVars clause.head)
+
 	let isRule clause = not (isFact clause)
 
 	let quantifiedVars clause =
-		let allConstrVars = fold_left StringSet.union StringSet.empty (map constrVars clause.constraints) in
-		symbolVars clause.head |> StringSet.diff allConstrVars
+		StringSet.diff (allConstrVars clause) (symbolVars clause.head)
 
 	let filterClauses rel arity =
 		let eligible clause = clause.head.rel = rel && length clause.head.params = arity in
