@@ -96,21 +96,26 @@ let eval assignment constr =
 		| UpperConstr v -> -(StringMap.find v assignment) in
 	lhs >= constr.rhs
 
-let substitute assignment constr = match constr.lhs with
-| PosConstr pos ->
-	let f (acc, sum) (var, num) = match StringMap.find var assignment with
-	| Constant c -> acc, sum + c
-	| Variable v -> (v, num) :: acc, sum in
-	let acc, sum = fold_left f ([], 0) pos in
-	let rhs' = constr.rhs - sum in
-	(match simplifyPos acc with
-	| [] when rhs' <= 0 -> Tautology
-	| [] -> Contradiction
-	| xs -> Result {lhs = PosConstr xs; rhs = rhs'})
-| UpperConstr upper -> match StringMap.find upper assignment with
-	| Constant c when -c >= constr.rhs -> Tautology
-	| Constant c -> Contradiction
-	| Variable v -> Result {constr with lhs = UpperConstr v}
+let substitute assignment constr =
+	let replace var =
+		if StringMap.mem var assignment
+			then StringMap.find var assignment
+			else Variable var in
+	match constr.lhs with
+	| PosConstr pos ->
+		let f (acc, sum) (var, num) = match replace var with
+		| Constant c -> acc, sum + c
+		| Variable v -> (v, num) :: acc, sum in
+		let acc, sum = fold_left f ([], 0) pos in
+		let rhs' = constr.rhs - sum in
+		(match simplifyPos acc with
+		| [] when rhs' <= 0 -> Tautology
+		| [] -> Contradiction
+		| xs -> Result {lhs = PosConstr xs; rhs = rhs'})
+	| UpperConstr upper -> match replace upper with
+		| Constant c when -c >= constr.rhs -> Tautology
+		| Constant c -> Contradiction
+		| Variable v -> Result {constr with lhs = UpperConstr v}
 
 (* produces a list of facts which can be derived from all facts in `clauses' and the specified `rule' *)
 let applyRule (clauses: clause list) (rule: clause) =
@@ -121,7 +126,10 @@ let applyRule (clauses: clause list) (rule: clause) =
 	let facts = map findFacts rule.syms in
 
 	(* generate all possible tuples *)
-	let product = nCartesianProduct facts in
+	let product =
+		if length rule.syms > 0
+			then nCartesianProduct facts
+			else [[]] in
 
 	let solve tuple =
 		let tupleParams = map (fun c -> c.head.params) tuple in
@@ -143,10 +151,10 @@ let applyRule (clauses: clause list) (rule: clause) =
 				ownConstraints @ tupleConstraints |> collect filterConstraint |> sequenceList |> mapOption (fun constraints ->
 					let elim var constrs =
 						if StringMap.mem var canonical
-							then match (StringMap.find var canonical) with
+							then match StringMap.find var canonical with
 							| Constant _ -> constrs
 							| Variable v -> qElim v constrs
-							else constrs in
+							else qElim var constrs in
 					let eliminated = StringSet.fold elim (quantifiedVars rule) constraints in
 					let params = map (substituteExp canonical) rule.head.params in
 					{head = {rule.head with params = params}; syms = []; constraints = eliminated}
