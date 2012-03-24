@@ -40,7 +40,7 @@ let bindOption f = function
 
 let getOption = function
 | Some y -> y
-| None -> raise Not_found
+| None -> assert false
 
 let rec foldLeftOption f acc = function
 | [] -> acc
