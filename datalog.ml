@@ -95,6 +95,8 @@ module type Datalog = sig
 
 	val contained: clause list -> relation -> number list -> bool
 
+	val showClause: clause -> string
+
 end
 
 

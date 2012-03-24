@@ -46,7 +46,7 @@ end
 
 include PosTypes
 module M = Make(PosTypes)
-open M
+include M
 
 let simplifyPos (constr: number posConstr) =
 	let grouped = groupBy fst constr in
