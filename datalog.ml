@@ -15,8 +15,12 @@ let showExp f = function
 | Variable v -> v
 
 let showSymbol f sym =
-	let params = map (showExp f) sym.params |> String.concat "," in
-	sym.rel ^ "(" ^ params ^ ")"
+	if length sym.params > 0
+		then
+			let params = map (showExp f) sym.params |> String.concat "," in
+			sym.rel ^ "(" ^ params ^ ")"
+		else
+			sym.rel
 
 let symbolVars sym =
 	let variable = function
