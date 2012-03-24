@@ -60,7 +60,7 @@ module Make(T: DatalogTypes) = struct
 	let isRule clause = not (isFact clause)
 
 	let quantifiedVars clause =
-		let allConstrVars = fold_right StringSet.union (map constrVars clause.constraints) StringSet.empty in
+		let allConstrVars = fold_left StringSet.union StringSet.empty (map constrVars clause.constraints) in
 		symbolVars clause.head |> StringSet.diff allConstrVars
 
 	let filterClauses rel arity =

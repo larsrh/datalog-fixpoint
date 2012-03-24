@@ -15,4 +15,4 @@ let rec nCartesianProduct =	function
 | [l] -> map (fun i -> [i]) l
 | h :: t ->
 	let rest = nCartesianProduct t in
-	concat (map (fun i -> map (fun r -> i :: r) rest) h)
+	map (fun i -> map (fun r -> i :: r) rest) h |> concat
