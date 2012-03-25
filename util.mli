@@ -1,8 +1,8 @@
 (** Miscellaneous utility functions. *)
 
 (** [groupBy f xs] groups the elements of [xs]. An element [x] is in the group
-    [f x]. A group is a pair of a key [k] and a list [ys] such that	for every
-	element [y] of [ys] the equality [k = f y] holds. *)
+    [f x]. A group is a pair of a key [k] and a list [ys] such that for every
+    element [y] of [ys] the equality [k = f y] holds. *)
 val groupBy: ('a -> 'b) -> 'a list -> ('b * 'a list) list
 
 (** Applies the specified mapping, removes all [None] elements, and drops the
@@ -14,7 +14,7 @@ val mapOption: ('a -> 'b) -> 'a option -> 'b option
 
 (** Applies a function monadically to an optional value. The result of
     [bindOption f x] equals [y] iff [x = Some z] and [y = f z] for some [z], or
-	else [None]. *)
+    else [None]. *)
 val bindOption: ('a -> 'b option) -> 'a option -> 'b option
 
 (** Unsafely drops the [Some] constructor of the argument. Raises an assertion
@@ -30,7 +30,7 @@ val foldRightOption: ('a -> 'b -> 'b option) -> 'a list -> 'b option -> 'b optio
 
 (** Traverse a [list] using the [option] applicative functor. The result of
     [sequenceList xs] is [Some ys] iff all elements [x] in [xs] are not
-	[None]. *)
+    [None]. *)
 val sequenceList: 'a option list -> 'a list option
 
 (** Repeatedly calls the function until the specified exception is raised.

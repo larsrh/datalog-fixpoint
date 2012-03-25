@@ -90,7 +90,7 @@ module Make(T: DatalogTypes) = struct
 
 end
 
-module type Datalog = sig
+module type Interface = sig
 
 	include DatalogTypes
 
