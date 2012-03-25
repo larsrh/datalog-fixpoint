@@ -48,23 +48,29 @@ include PosTypes
 module M = Make(PosTypes)
 include M
 
-let simplifyPos (constr: number posConstr) =
+let simplifyPosLHS (constr: number posConstr) =
 	let grouped = groupBy fst constr in
 	let sumN (x, ns) = x, map snd ns |> fold_left (+) 0 in
-	let pos (_, n) = n > 0 in
-	map sumN grouped |> filter pos
+	let nonZero (x, n) = match n with
+	| 0 -> None
+	| _ when n > 0 -> Some (Some (x, n))
+	| _ when n < 0 -> Some None in
+	map sumN grouped |> collect nonZero |> sequenceList
+
+let simplifyPos (constr: number posConstr) (rhs: number) =
+	let f lhs = match lhs with
+	| [] when 0 >= rhs -> Tautology
+	| [] -> Contradiction
+	| xs -> Result {lhs = PosConstr xs; rhs = rhs} in
+	simplifyPosLHS constr |> mapOption f
 
 let translateRHS b op =
 	if op
 		then b
 		else b + 1
 
-let mkPosConstraint cs inclusive b =
-	let non_neg (_, x) = x >= 0 in
-	let simplified = map swap cs |> simplifyPos in
-	if for_all non_neg simplified
-		then Some {lhs = PosConstr simplified; rhs = translateRHS b inclusive}
-		else None
+let mkPosConstraint xs inclusive b =
+	simplifyPos (map swap xs) (translateRHS b inclusive)
 
 let mkUpperBound v inclusive b =
 	{lhs = UpperConstr v; rhs = translateRHS (-b) inclusive}
@@ -102,11 +108,8 @@ let substitute assignment constr =
 		| Constant c -> acc, sum + c
 		| Variable v -> (v, num) :: acc, sum in
 		let acc, sum = fold_left f ([], 0) pos in
-		let rhs' = constr.rhs - sum in
-		(match simplifyPos acc with
-		| [] when rhs' <= 0 -> Tautology
-		| [] -> Contradiction
-		| xs -> Result {lhs = PosConstr xs; rhs = rhs'})
+		let rhs = constr.rhs - sum in
+		simplifyPos acc rhs |> getOption
 	| UpperConstr upper -> match replace upper with
 		| Constant c when -c >= constr.rhs -> Tautology
 		| Constant c -> Contradiction
@@ -194,8 +197,12 @@ let contained clauses relation nums =
 let test =
 	let open OUnit in
 
+	let _mkPosConstraint xs inclusive b = match mkPosConstraint xs inclusive b with
+	| Some (Result r) -> r
+	| _ -> assert false in
+
 	let testSimplify _ =
-		let expected = Some {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3} in
+		let expected = Some (Result {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3}) in
 		let actual = mkPosConstraint [1, "y"; 1, "x"; 2, "x"; -1, "z"; 1, "z"] true 3 in
 		assert_equal expected actual
 	in
@@ -210,7 +217,7 @@ let test =
 		let clauses = [{
 			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
 			syms = [];
-			constraints = [mkUpperBound "x" false 3; mkPosConstraint [1, "y"] false 2 |> getOption]
+			constraints = [mkUpperBound "x" false 3; _mkPosConstraint [1, "y"] false 2]
 		}] in
 		let shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
 		let check vals = assert_equal (shouldContain vals) (contained clauses "R" vals) in
@@ -221,7 +228,7 @@ let test =
 		let facts = [{
 			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
 			syms = [];
-			constraints = [mkUpperBound "x" false 6; mkPosConstraint [1, "y"] false 2 |> getOption]
+			constraints = [mkUpperBound "x" false 6; _mkPosConstraint [1, "y"] false 2]
 		}; {
 			head = {rel = "T"; params = [Variable "x"; Variable "x"]};
 			syms = [];
@@ -244,7 +251,7 @@ let test =
 		let clauses = [{
 			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
 			syms = [];
-			constraints = [mkUpperBound "x" false 6; mkPosConstraint [1, "y"] false 2 |> getOption]
+			constraints = [mkUpperBound "x" false 6; _mkPosConstraint [1, "y"] false 2]
 		}; {
 			head = {rel = "T"; params = [Variable "x"; Variable "x"]};
 			syms = [];

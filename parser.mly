@@ -13,7 +13,6 @@
 %token TIMES PLUS MINUS LESS LEQ GREATER GEQ
 %start clause
 %type <PosDatalog.clause> clause
-%type <PosDatalog.number Datalog.symbol> symbol
 %%
 clause:
   symbol DOT { {head = $1; syms = []; constraints = []} }
@@ -37,9 +36,13 @@ item:
 | symbol { Symbol $1 }
 ;
 constr:
-  IDENTIFIER lt wholeNumber       { mkUpperBound $1 $2 $3 }
+  IDENTIFIER lt wholeNumber { mkUpperBound $1 $2 $3 }
 | MINUS IDENTIFIER gt wholeNumber { mkUpperBound $2 $3 (-$4) }
-| sum gt wholeNumber              { mkPosConstraint $1 $2 $3 |> getOption }
+| sum gt wholeNumber {
+	match mkPosConstraint $1 $2 $3 with
+	| Some (Result r) -> r
+	| _ -> assert false
+}
 ;
 wholeNumber:
   NUMBER { $1 }
