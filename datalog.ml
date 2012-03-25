@@ -81,13 +81,11 @@ module Make(T: DatalogTypes) = struct
 
 	let showClause clause =
 		let head = showNumSymbol clause.head in
-		let syms =
-			if length clause.syms > 0
-				then (map showNumSymbol clause.syms |> String.concat ", ") ^ ", "
-				else "" in
-		let constrs = map showConstr clause.constraints |> String.concat ", " in
-		if String.length syms > 0 || String.length constrs > 0
-			then head ^ " :- " ^ syms ^ constrs ^ "."
+		let syms = map showNumSymbol clause.syms in
+		let constrs = map showConstr clause.constraints in
+		let body = syms @ constrs |> String.concat ", " in
+		if String.length body > 0
+			then head ^ " :- " ^ body ^ "."
 			else head ^ "."
 
 end
