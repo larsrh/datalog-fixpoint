@@ -1,7 +1,11 @@
+(** Entry point for the test suite. Side effect: executes OUnit. *)
+
 open OUnit
 
 open MyBat
 open Util
+
+(**/**)
 
 let suite =
 	"Tests" >::: [
