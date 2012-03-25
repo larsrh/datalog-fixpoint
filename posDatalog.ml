@@ -78,7 +78,7 @@ let sanitizeConstraints (constrs: number constr result list) =
 	collect f constrs |> sequenceList
 
 let mkPosConstraint xs inclusive b =
-	simplifyPos (map swap xs) (translateRHS b inclusive)
+	simplifyPos (map (fun (x, y) -> y, x) xs) (translateRHS b inclusive)
 
 let mkUpperBound v inclusive b =
 	{lhs = UpperConstr v; rhs = translateRHS (-b) inclusive}
@@ -231,6 +231,9 @@ let test =
 		}] in
 		let shouldContain [x; y; z] = x < 3 && y > 2 && z = 5 in
 		let check vals = assert_equal (shouldContain vals) (contained clauses "R" vals) in
+		let rec repeat x = function
+		| 0 -> []
+		| n -> x :: repeat x (n-1) in
 		iter check (repeat [-4;-3;-2;-1;0;1;2;3;4;5;6] 3 |> nCartesianProduct)
 	in
 

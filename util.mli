@@ -1,6 +1,3 @@
-val swap: 'a * 'b -> 'b * 'a
-
-val repeat: 'a -> int -> 'a list
 
 val groupBy: ('a -> 'b) -> 'a list -> ('b * 'a list) list
 

@@ -2,12 +2,6 @@ open List
 
 open MyBat
 
-let swap (x, y) = y, x
-
-let rec repeat x = function
-| 0 -> []
-| n -> x :: repeat x (n-1)
-
 let rec groupBy f = function
 | [] -> []
 | x :: xs ->
