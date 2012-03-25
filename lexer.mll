@@ -7,7 +7,7 @@
 rule token = parse
 | [' ' '\t' '\n'] { token lexbuf }
 | ['0' - '9']+ as num { NUMBER(int_of_string num) }
-| ['a' - 'z' 'A' - 'Z']+ as id { IDENTIFIER(id) }
+| ['a' - 'z' 'A' - 'Z' '_']+ as id { IDENTIFIER(id) }
 | '(' { LPAREN }
 | ')' { RPAREN }
 | '.' { DOT }
