@@ -1,21 +1,23 @@
 all: build
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind
-DEBUG=main.byte
-FILE=main.native
 
 build:
-	$(OCAMLBUILD) $(FILE)
+	$(OCAMLBUILD) main.native
 
 run:
-	$(OCAMLBUILD) $(FILE) --
+	$(OCAMLBUILD) main.native --
 
 test:
 	$(OCAMLBUILD) test.native --
 
 debug:
-	$(OCAMLBUILD) -tag debug $(DEBUG)
-	rlwrap ocamldebug -I _build $(DEBUG)
+	$(OCAMLBUILD) -tag debug main.byte
+	rlwrap ocamldebug -I _build main.byte
+
+debug-test:
+	$(OCAMLBUILD) -tag debug test.byte
+	rlwrap ocamldebug `ocamlfind query -recursive -i-format oUnit` -I _build test.byte
 
 clean:
 	$(OCAMLBUILD) -clean
