@@ -1,5 +1,6 @@
 {
 	open Parser
+	open MyBat
 	exception Eof
 }
 
@@ -22,8 +23,13 @@ rule token = parse
 | eof { raise Eof }
 
 {
-	let parse () =
-		let lexbuf = Lexing.from_channel stdin in
+	let parse lexbuf =
 		let f _ = Parser.clause token lexbuf in
 		Util.actionToList f Eof
+
+	let parseStdIn () =
+		Lexing.from_channel stdin |> parse
+
+	let parseString str =
+		Lexing.from_string str |> parse
 }
