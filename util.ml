@@ -63,3 +63,9 @@ let actionToList action exn =
 		assert false
 	with e when e = exn ->
 		List.rev !vals
+
+let readFile name =
+	let channel = open_in name in
+	let f () = input_line channel in
+	let lines = actionToList f End_of_file in
+	close_in channel; lines

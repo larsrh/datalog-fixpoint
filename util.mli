@@ -19,3 +19,5 @@ val foldRightOption: ('a -> 'b -> 'b option) -> 'a list -> 'b option -> 'b optio
 val sequenceList: 'a option list -> 'a list option
 
 val actionToList: (unit -> 'a) -> exn -> 'a list
+
+val readFile: string -> string list
