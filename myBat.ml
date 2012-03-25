@@ -1,5 +1,7 @@
 open List
 
+(** Utility functions. *)
+
 (* From the 'Batteries' library, licensed under LGPL 2.1 (or later) *)
 (* <https://github.com/ocaml-batteries-team/batteries-included> *)
 
