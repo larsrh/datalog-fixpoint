@@ -84,19 +84,28 @@ let mkUpperBound v inclusive b =
 	{lhs = UpperConstr v; rhs = translateRHS (-b) inclusive}
 
 let qElim (x: var) (constrs: number constr list) =
-	let isPos c = match c.lhs with
-	| PosConstr _ -> true
-	| UpperConstr _ -> false in
 	let containsX c = constrVars c |> StringSet.mem x in
-	let pos, upper = partition isPos constrs in
-	let posX, posNonX = partition containsX pos in
-	let upperX, upperNonX = partition containsX upper in
-	let elim ({lhs = PosConstr pos; rhs = a}, {rhs = b}) = (* TODO use proper simplification *)
+	let allX, allNonX = partition containsX constrs in
+
+	let toPos c = match c.lhs with
+	| PosConstr pos -> Some (pos, c.rhs)
+	| UpperConstr _ -> None in
+	let toUpper c = match c.lhs with
+	| UpperConstr v -> Some c.rhs
+	| PosConstr _ -> None in
+
+	let pos = collect toPos allX in
+	let upper = collect toUpper allX in
+
+	let elim ((pos, a), b) =
 		let rest = remove_assoc x pos in
 		let c = assoc x pos in
-		{lhs = PosConstr rest; rhs = a + c * b} in
-	let newConstrs = cartesianProduct posX upperX |> map elim in
-	posNonX @ upperNonX @ newConstrs
+		let rhs = a + c * b in
+		simplifyPos rest rhs |> getOption in
+
+	cartesianProduct pos upper |> map elim |>
+	sanitizeConstraints |>
+	mapOption (append allNonX)
 
 let eval assignment constr =
 	let eval (var, num) = num * (StringMap.find var assignment) in
@@ -148,16 +157,18 @@ let applyRule (clauses: clause list) (rule: clause) =
 				let substituteAll (assignment, clause) = map (substitute assignment) clause.constraints in
 				let tupleConstraints = combine assignments tuple |> map substituteAll |> concat in
 				let ownConstraints = map (substitute canonical) rule.constraints in
-				ownConstraints @ tupleConstraints |> sanitizeConstraints |> mapOption (fun constraints ->
-					let elim var constrs =
+				ownConstraints @ tupleConstraints |> sanitizeConstraints |> bindOption (fun constraints ->
+					let elim constrs var =
 						if StringMap.mem var canonical
 							then match StringMap.find var canonical with
-							| Constant _ -> constrs
+							| Constant _ -> Some constrs
 							| Variable v -> qElim v constrs
 							else qElim var constrs in
-					let eliminated = StringSet.fold elim (quantifiedVars rule) constraints in
-					let params = map (substituteExp canonical) rule.head.params in
-					{head = {rule.head with params = params}; syms = []; constraints = eliminated}
+
+					quantifiedVars rule |> StringSet.elements |> foldLeftOption elim (Some constraints) |> mapOption (fun eliminated ->
+						let params = map (substituteExp canonical) rule.head.params in
+						{head = {rule.head with params = params}; syms = []; constraints = eliminated}
+					)
 				)
 			)
 		) in
@@ -210,7 +221,7 @@ let test =
 	in
 
 	let testQElim _ =
-		let expected = [{lhs = UpperConstr "y"; rhs = 2}; {lhs = PosConstr ["y", 1]; rhs = 18}] in
+		let expected = Some [{lhs = UpperConstr "y"; rhs = 2}; {lhs = PosConstr ["y", 1]; rhs = 18}] in
 		let actual = qElim "x" [{lhs = UpperConstr "x"; rhs = 5}; {lhs = PosConstr ["y", 1; "x", 3]; rhs = 3}; {lhs = UpperConstr "y"; rhs = 2}] in
 		assert_equal expected actual
 	in
