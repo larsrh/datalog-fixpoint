@@ -1,6 +1,8 @@
-all: build
-
 OCAMLBUILD=ocamlbuild -use-ocamlfind
+
+default: build
+
+all: clean test build doc package
 
 build:
 	$(OCAMLBUILD) main.native
