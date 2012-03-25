@@ -69,31 +69,26 @@ let mkPosConstraint cs inclusive b =
 let mkUpperBound v inclusive b =
 	{lhs = UpperConstr v; rhs = translateRHS (-b) inclusive}
 
-(* Transforms -x >= b and c * x + d_i * y_i >= a into d_i * y_i >= a + c * b *)
-let removeX (x: var) (b: number) (constr: number posConstr) (a: number) =
-	let rest = remove_assoc x constr in
-	let c = assoc x constr in
-	{lhs = PosConstr rest; rhs = a + c * b}
-
 let qElim (x: var) (constrs: number constr list) =
-	let isPos c =
-		match c.lhs with
-		| PosConstr _ -> true
-		| UpperConstr _ -> false in
+	let isPos c = match c.lhs with
+	| PosConstr _ -> true
+	| UpperConstr _ -> false in
 	let containsX c = constrVars c |> StringSet.mem x in
 	let pos, upper = partition isPos constrs in
 	let posX, posNonX = partition containsX pos in
 	let upperX, upperNonX = partition containsX upper in
-	let elim ({lhs = PosConstr pos; rhs = a}, {rhs = b}) = removeX x b pos a in (* TODO use proper simplification *)
+	let elim ({lhs = PosConstr pos; rhs = a}, {rhs = b}) = (* TODO use proper simplification *)
+		let rest = remove_assoc x pos in
+		let c = assoc x pos in
+		{lhs = PosConstr rest; rhs = a + c * b} in
 	let newConstrs = cartesianProduct posX upperX |> map elim in
 	posNonX @ upperNonX @ newConstrs
 
 let eval assignment constr =
 	let eval (var, num) = num * (StringMap.find var assignment) in
-	let lhs =
-		match constr.lhs with
-		| PosConstr pos -> fold_left (+) 0 (map eval pos)
-		| UpperConstr v -> -(StringMap.find v assignment) in
+	let lhs = match constr.lhs with
+	| PosConstr pos -> fold_left (+) 0 (map eval pos)
+	| UpperConstr v -> -(StringMap.find v assignment) in
 	lhs >= constr.rhs
 
 let substitute assignment constr =
