@@ -69,6 +69,13 @@ let translateRHS b op =
 		then b
 		else b + 1
 
+let sanitizeConstraints (constrs: number constr result list) =
+	let f = function
+	| Tautology -> None
+	| Contradiction -> Some None
+	| Result r -> Some (Some r) in
+	collect f constrs |> sequenceList
+
 let mkPosConstraint xs inclusive b =
 	simplifyPos (map swap xs) (translateRHS b inclusive)
 
@@ -137,16 +144,10 @@ let applyRule (clauses: clause list) (rule: clause) =
 				let canonical = canonicalizeVars equalities in
 				let assignments = map (fun m -> composeExpMap m.assignment canonical) mappings in
 
-				(* get rid of tautologies *)
-				let filterConstraint = function
-				| Tautology -> None
-				| Contradiction -> Some None
-				| Result r -> Some (Some r) in
-
 				let substituteAll (assignment, clause) = map (substitute assignment) clause.constraints in
 				let tupleConstraints = combine assignments tuple |> map substituteAll |> concat in
 				let ownConstraints = map (substitute canonical) rule.constraints in
-				ownConstraints @ tupleConstraints |> collect filterConstraint |> sequenceList |> mapOption (fun constraints ->
+				ownConstraints @ tupleConstraints |> sanitizeConstraints |> mapOption (fun constraints ->
 					let elim var constrs =
 						if StringMap.mem var canonical
 							then match StringMap.find var canonical with
