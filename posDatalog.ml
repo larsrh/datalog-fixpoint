@@ -143,26 +143,49 @@ let applyRule (clauses: clause list) (rule: clause) =
 	(* generate all possible tuples *)
 	let product = nCartesianProduct facts in
 
+	(* solve one possible tuple: unify all symbols, merge equalities, substitute, eliminate quantifiers *)
 	let solve tuple =
-		let tupleParams = map (fun c -> c.head.params) tuple in
-		let ownParams = map (fun s -> s.params) rule.syms in
-		combine tupleParams ownParams |> map (fun (x, y) -> unify x y) |> sequenceList |> bindOption (fun mappings ->
+		(* list of list of parameters *)
+		let tupleParamss = map (fun c -> c.head.params) tuple in
+		let ownParamss = map (fun s -> s.params) rule.syms in
+
+		(* unify corresponding pairs of parameters (`x': head of the fact, `y': symbol in the body of the rule) *)
+		(* sequence the result: continue only iff all unifications succeeded *)
+		combine tupleParamss ownParamss |> map (fun (x, y) -> unify x y) |> sequenceList |> bindOption (fun mappings ->
+			(* from the unification results, obtain all equalitiy sets and merge those *)
+			(* continue only iff this doesn't produce a contradiction *)
 			map (fun m -> m.equalities) mappings |> mergeEqualities |> bindOption (fun equalities ->
+				(* a fresh identifier for each equality which does not contain a number *)
 				let canonical = canonicalizeVars equalities in
+
+				(* for each fact, compute the final assignment by composing the original assignment with the canonical substitution *)
 				let assignments = map (fun m -> composeExpMap m.assignment canonical) mappings in
 
+				(* substitute all constraints in the facts *)
 				let substituteAll (assignment, clause) = map (substitute assignment) clause.constraints in
 				let tupleConstraints = combine assignments tuple |> map substituteAll |> concat in
+
+				(* substitute all constraints in this rule *)
 				let ownConstraints = map (substitute canonical) rule.constraints in
+
+				(* sanitize the new constraints *)
+				(* only continue iff no contradictions have been generated *)
 				ownConstraints @ tupleConstraints |> sanitizeConstraints |> bindOption (fun constraints ->
-					let elim constrs var =
+					(* set of quantified variables *)
+					let quantified = quantifiedVars rule in
+
+					(* lookup the quantified variables in the canonical substitution *)
+					let addToSet var vars =
 						if StringMap.mem var canonical
 							then match StringMap.find var canonical with
-							| Constant _ -> Some constrs
-							| Variable v -> qElim v constrs
-							else qElim var constrs in
+							| Constant _ -> vars
+							| Variable v -> StringSet.add v vars
+						else
+							StringSet.add var vars in
+					let elims = StringSet.fold addToSet quantified StringSet.empty |> StringSet.elements in
 
-					quantifiedVars rule |> StringSet.elements |> foldLeftOption elim (Some constraints) |> mapOption (fun eliminated ->
+					(* eliminate the distinct canonicalized variables and produce a new fact accordingly *)
+					foldRightOption qElim elims (Some constraints) |> mapOption (fun eliminated ->
 						let params = map (substituteExp canonical) rule.head.params in
 						{head = {rule.head with params = params}; syms = []; constraints = eliminated}
 					)
