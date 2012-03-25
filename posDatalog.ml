@@ -54,7 +54,8 @@ let simplifyPosLHS (constr: number posConstr) =
 	let nonZero (x, n) = match n with
 	| 0 -> None
 	| _ when n > 0 -> Some (Some (x, n))
-	| _ when n < 0 -> Some None in
+	| _ when n < 0 -> Some None
+	| _ -> assert false (* avoid compiler warning *) in
 	map sumN grouped |> collect nonZero |> sequenceList
 
 let simplifyPos (constr: number posConstr) (rhs: number) =
