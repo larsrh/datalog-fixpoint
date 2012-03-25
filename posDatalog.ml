@@ -141,10 +141,7 @@ let applyRule (clauses: clause list) (rule: clause) =
 	let facts = map findFacts rule.syms in
 
 	(* generate all possible tuples *)
-	let product =
-		if length rule.syms > 0
-			then nCartesianProduct facts
-			else [[]] in
+	let product = nCartesianProduct facts in
 
 	let solve tuple =
 		let tupleParams = map (fun c -> c.head.params) tuple in
