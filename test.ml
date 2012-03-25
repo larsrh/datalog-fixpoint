@@ -7,7 +7,8 @@ let suite =
 	"Tests" >::: [
 		Unification.test;
 		Datalog.test;
-		PosDatalog.test
+		PosDatalog.test;
+		FullTest.test
 	]
 
 let _ =
