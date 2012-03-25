@@ -36,6 +36,7 @@ let getOption = function
 | Some y -> y
 | None -> assert false
 
+(* fold*Option don't use fold_* from the library to achieve fail-fast behaviour *)
 let rec foldLeftOption f acc = function
 | [] -> acc
 | x :: xs -> bindOption (fun y -> foldLeftOption f (f y x) xs) acc
