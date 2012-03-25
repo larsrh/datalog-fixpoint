@@ -19,6 +19,9 @@ debug-test:
 	$(OCAMLBUILD) -tag debug test.byte
 	rlwrap ocamldebug `ocamlfind query -recursive -i-format oUnit` -I _build test.byte
 
+doc:
+	$(OCAMLBUILD) src.docdir/index.html
+
 clean:
 	$(OCAMLBUILD) -clean
 
