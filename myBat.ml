@@ -1,9 +1,9 @@
-open List
-
 (** Utility functions. *)
 
 (* From the 'Batteries' library, licensed under LGPL 2.1 (or later) *)
 (* <https://github.com/ocaml-batteries-team/batteries-included> *)
+
+open List
 
 let (|>) x f = f x
 let (|-) f g x = g (f x)

@@ -1,12 +1,15 @@
+(** Entry point for the program. Side effect: calls {!main}. *)
+
 open List
 
 open MyBat
 
-(** Entry point for the program. Reads a database from [stdin], computes and
-    pretty prints the fixpoint. *)
-
-let _ =
+(** Reads a database from [stdin], computes the fixpoint and pretty prints the
+    result to [stdout]. *)
+let main () =
 	Lexer.parseStdIn () |>
 	PosDatalog.fixpoint |>
 	map PosDatalog.showClause |>
 	iter print_endline
+
+let _ = main ()
