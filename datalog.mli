@@ -57,6 +57,21 @@ module type DatalogTypes = sig
 	(** Converts a constraint to a string. *)
 	val showConstr: number constr -> string
 
+	(** Eliminate an existentially quantified variable from a list of clauses.
+	    It is guaranteed that if [Some y = elimVar x cs] holds, [x] is not an
+	    element of [elimVar x cs]. A result of [None] denotes a
+	    contradiction. *)
+	val elimVar: var -> number constr list -> number constr list option
+
+	(** Evaluates a constraint by substituting all occuring variables in the
+	    constraint and returning [true] iff the assignment satisfies the
+		constraint. Raises [Not_found] when the assignment does not contain all
+	    occuring variables. *)
+	val eval: number stringMap -> number constr -> bool
+
+	(** Substitutes (not necessarily all) variables in a constraint. *)
+	val substitute: number exp stringMap -> number constr -> number constr result
+
 end
 
 (** Provides utility functions implementations based on an instance of
@@ -91,6 +106,10 @@ module Make(T: DatalogTypes): sig
 	(** Converts a clause to a [string]. *)
 	val showClause: T.clause -> string
 
+	(** Compute the fixpoint of a database. This function is idempotent. The
+	    behaviour on lists containing duplicate elements is unspecified. *)
+	val fixpoint: T.clause list -> T.clause list
+
 end
 
 (** High-level interface to Datalog database operations. *)
@@ -101,15 +120,6 @@ module type Interface = sig
 	(** Compute the fixpoint of a database. This function is idempotent. The
 	    behaviour on lists containing duplicate elements is unspecified. *)
 	val fixpoint: clause list -> clause list
-
-	(** Evaluates a constraint by substituting all occuring variables in the
-	    constraint and returning [true] iff the assignment satisfies the
-		constraint. Raises [Not_found] when the assignment does not contain all
-	    occuring variables. *)
-	val eval: number stringMap -> number constr -> bool
-
-	(** Substitutes (not necessarily all) variables in a constraint. *)
-	val substitute: number exp stringMap -> number constr -> number constr result
 
 	(** [contained cs r xs] checks whether the tuple [xs] is element of the
 	    relation [r] in the database [cs]. *)

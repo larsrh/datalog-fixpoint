@@ -1,5 +1,7 @@
 (** Miscellaneous utility functions. *)
 
+open Types
+
 (** [groupBy f xs] groups the elements of [xs]. An element [x] is in the group
     [f x]. A group is a pair of a key [k] and a list [ys] such that for every
     element [y] of [ys] the equality [k = f y] holds. *)
@@ -32,6 +34,10 @@ val foldRightOption: ('a -> 'b -> 'b option) -> 'a list -> 'b option -> 'b optio
     [sequenceList xs] is [Some ys] iff all elements [x] in [xs] are not
     [None]. *)
 val sequenceList: 'a option list -> 'a list option
+
+(** Remove all tautologies and return [Some ys] iff the input list did not
+    contain contradictions. *)
+val getResults: 'a result list -> 'a list option
 
 (** Repeatedly calls the function until the specified exception is raised.
     Returns all results of the function in a list. *)

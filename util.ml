@@ -1,6 +1,7 @@
 open List
 
 open MyBat
+open Types
 
 let rec groupBy f = function
 | [] -> []
@@ -48,6 +49,13 @@ let rec foldRightOption f list acc = match list with
 let sequenceList list =
 	let f x acc = mapOption (fun y -> y :: acc) x in
 	Some [] |> foldRightOption f list
+
+let getResults xs =
+	let f = function
+	| Tautology -> None
+	| Contradiction -> Some None
+	| Result r -> Some (Some r) in
+	collect f xs |> sequenceList
 
 let actionToList action exn =
 	let vals = ref [] in
