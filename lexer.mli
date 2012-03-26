@@ -1,4 +1,4 @@
-(** Lexical analyzer for positive Datalog program. Serves as interface to
+(** Lexical analyzer for positive Datalog programs. Serves as an interface to
     the parser. *)
 
 (** Reads [stdin] and yields a list of parsed {{!PosDatalog}positive Datalog}

@@ -27,7 +27,9 @@ module type DatalogTypes = sig
 	(** The type of constants. *)
 	type number
 
-	(** The type of constraints, parametrized on the type of constants. *)
+	(** The type of constraints, parametrized on the type of constants.
+	    Instances are expected to provide a function which produces values of
+	    this abstract type. *)
 	type 'a constr
 
 	(** The type of clauses, consisting of a head and a body, which consists of
