@@ -180,19 +180,3 @@ module type Interface = sig
 	val showClause: clause -> string
 
 end
-
-
-let test =
-	let open OUnit in
-
-	let testComposeExpMap _ =
-		assert_equal ~cmp:(StringMap.equal (=))
-			(fold_right2 StringMap.add ["y"; "x"] [Constant 1; Constant 0] StringMap.empty)
-			(composeExpMap
-				(fold_right2 StringMap.add ["y"; "x"] [Constant 1; Variable "u"] StringMap.empty)
-				(fold_right2 StringMap.add ["u"; "v"] [Constant 0; Constant 0] StringMap.empty))
-	in
-
-	"Datalog" >::: [
-		"composeExpMap" >:: testComposeExpMap
-	]

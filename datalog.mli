@@ -129,8 +129,3 @@ module type Interface = sig
 	val showClause: clause -> string
 
 end
-
-
-(**/**)
-
-val test: OUnit.test
