@@ -2,16 +2,6 @@
 
 open Types
 
-(** The type of relation identifiers. *)
-type relation = string
-
-(** The type of a symbol consisting of an relation identifier and a list of
-    parameters. *)
-type 'a symbol = {
-	rel: relation;
-	params: 'a exp list;
-}
-
 (** Converts an {{!Types.exp}expression} to a [string] using the specified
     function to convert constants. *)
 val showExp: ('a -> string) -> 'a exp -> string

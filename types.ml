@@ -11,6 +11,16 @@ type 'a exp = Constant of 'a | Variable of var
     tautology (always true) or a contradiction (always false). *)
 type 'a result = Result of 'a | Tautology | Contradiction
 
+(** The type of relation identifiers. *)
+type relation = string
+
+(** The type of a symbol consisting of an relation identifier and a list of
+    parameters. *)
+type 'a symbol = {
+	rel: relation;
+	params: 'a exp list;
+}
+
 (** The module for sets of [string]s. *)
 module StringSet = Set.Make(String)
 

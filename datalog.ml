@@ -4,13 +4,6 @@ open Unification
 open List
 open MyBat
 
-type relation = string
-
-type 'a symbol = {
-	rel: relation;
-	params: 'a exp list;
-}
-
 let showExp f = function
 | Constant c -> f c
 | Variable v -> v
