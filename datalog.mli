@@ -39,14 +39,14 @@ module type DatalogTypes = sig
 		constraints: constr list;
 	}
 
-	(** The set of variables in a constraint. *)
-	val constrVars: constr -> stringSet
-
 	(** Converts a constant to a string. *)
 	val showNumber: number -> string
 
 	(** Converts a constraint to a string. *)
 	val showConstr: constr -> string
+
+	(** The set of variables in a constraint. *)
+	val constrVars: constr -> stringSet
 
 	(** Eliminate an existentially quantified variable from a list of clauses.
 	    It is guaranteed that if [Some y = elimVar x cs] holds, [x] is not an

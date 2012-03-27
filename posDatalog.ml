@@ -5,14 +5,15 @@ open Util
 open Types
 open Datalog
 
-type posConstr = (var * int) list
-type upperConstr = var
-
-type lhs = PosConstr of posConstr | UpperConstr of upperConstr
-
 module PosTypes = struct
 
-	type number = int
+	include CommonDatalog.Int
+	open CommonDatalog.LinearConstraint
+
+	type posConstr = int linearConstraint
+	type upperConstr = var
+
+	type lhs = PosConstr of posConstr | UpperConstr of upperConstr
 
 	type constr = {
 		lhs: lhs;
@@ -26,20 +27,14 @@ module PosTypes = struct
 	}
 
 	let constrVars constr = match constr.lhs with
-	| PosConstr pos -> fold_right StringSet.add (map fst pos) StringSet.empty
+	| PosConstr pos -> linearConstrVars pos
 	| UpperConstr v -> StringSet.singleton v
-
-	let showNumber = string_of_int
 
 	let showConstr constr = match constr.lhs with
 	| PosConstr pos ->
-		let f (v, n) = string_of_int n ^ "*" ^ v in
-		let lhs = if length pos > 0
-			then map f pos |> String.concat " + "
-			else "0" in
-		lhs ^ " >= " ^ string_of_int constr.rhs
+		showLinearConstr showNumber 0 pos ^ " >= " ^ showNumber constr.rhs
 	| UpperConstr v ->
-		v ^ " <= " ^ string_of_int (-constr.rhs)
+		v ^ " <= " ^ showNumber (-constr.rhs)
 
 	let simplifyPosLHS (constr: posConstr) =
 		let grouped = groupBy fst constr in

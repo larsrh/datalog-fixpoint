@@ -42,11 +42,11 @@ module type DatalogTypes = sig
 		constraints: constr list;
 	}
 
-	val constrVars: constr -> stringSet
-
 	val showNumber: number -> string
 
 	val showConstr: constr -> string
+
+	val constrVars: constr -> stringSet
 
 	val elimVar: var -> constr list -> constr list option
 
