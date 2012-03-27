@@ -88,10 +88,10 @@ module Make(T: DatalogTypes) = struct
 			then head ^ " :- " ^ body ^ "."
 			else head ^ "."
 
-	(* produces a list of facts which can be derived from all facts in `clauses' and the specified `rule' *)
-	let applyRule (clauses: clause list) (rule: clause) =
+	(* produces a list of facts which can be derived from all `facts' and the specified `rule' *)
+	let applyRule (facts: clause list) (rule: clause) =
 		(* a fact is eligible for a symbol if the relation name and the arity match *)
-		let findFacts sym = filterClauses sym.rel (length sym.params) clauses |> filter isFact in
+		let findFacts sym = filterClauses sym.rel (length sym.params) facts in
 
 		(* a list of all possible matching facts for each symbol in the rule *)
 		let facts = map findFacts rule.syms in
@@ -151,14 +151,16 @@ module Make(T: DatalogTypes) = struct
 
 		collect solve product
 
-	let rec fixpoint clauses =
+	let fixpoint clauses =
 		let rules = filter isRule clauses in
-		let newFacts = map (applyRule clauses) rules |> concat in
-		let f acc fact = if mem fact acc then acc else fact :: acc in
-		let inserted = fold_left f clauses newFacts in
-		if length inserted > length clauses
-			then fixpoint inserted
-			else clauses
+		let rec aux facts =
+			let newFacts = map (applyRule facts) rules |> concat in
+			let f acc fact = if mem fact acc then acc else fact :: acc in
+			let inserted = fold_left f facts newFacts in
+			if length inserted > length facts
+				then aux inserted
+				else facts in
+		rules @ aux (filter isFact clauses)
 
 end
 

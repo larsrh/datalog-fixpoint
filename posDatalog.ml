@@ -180,39 +180,8 @@ let test =
 		iter check (repeat [-4;-3;-2;-1;0;1;2;3;4;5;6] 3 |> nCartesianProduct)
 	in
 
-	let testFixpoint _ =
-		let clauses = [{
-			head = {rel = "R"; params = [Variable "x"; Variable "y"; Constant 5]};
-			syms = [];
-			constraints = [mkUpperBound "x" false 6; _mkPosConstraint [1, "y"] false 2]
-		}; {
-			head = {rel = "T"; params = [Variable "x"; Variable "x"]};
-			syms = [];
-			constraints = []
-		}; {
-			head = {rel = "S"; params = [Variable "z"]};
-			syms = [{rel = "R"; params = [Variable "s"; Variable "s"; Variable "z"]}; {rel = "T"; params = [Variable "s"; Variable "z"]}];
-			constraints = [mkUpperBound "z" false 10]
-		}; {
-			head = {rel = "U"; params = [Variable "r"]};
-			syms = [{rel = "S"; params = [Variable "r"]}];
-			constraints = [mkUpperBound "r" false 9]
-		}] in
-		let newFacts = [{
-			head = {rel = "U"; params = [Constant 5]};
-			syms = [];
-			constraints = []
-		}; {
-			head = {rel = "S"; params = [Constant 5]};
-			syms = [];
-			constraints = []
-		}] in
-		assert_equal (newFacts @ clauses) (fixpoint clauses)
-	in
-
 	"PosDatalog" >::: [
 		"simplify" >:: testSimplify;
 		"qElim" >:: testQElim;
-		"contains" >:: testContains;
-		"fixpoint" >:: testFixpoint
+		"contains" >:: testContains
 	]
