@@ -27,42 +27,41 @@ module type DatalogTypes = sig
 	(** The type of constants. *)
 	type number
 
-	(** The type of constraints, parametrized on the type of constants.
-	    Instances are expected to provide a function which produces values of
-	    this abstract type. *)
-	type 'a constr
+	(** The type of constraints. Instances are expected to provide a function
+	    which produces values of this abstract type. *)
+	type constr
 
 	(** The type of clauses, consisting of a head and a body, which consists of
 	    symbols and constraints. *)
 	type clause = {
 		head: number symbol;
 		syms: number symbol list;
-		constraints: number constr list;
+		constraints: constr list;
 	}
 
 	(** The set of variables in a constraint. *)
-	val constrVars: number constr -> stringSet
+	val constrVars: constr -> stringSet
 
 	(** Converts a constant to a string. *)
 	val showNumber: number -> string
 
 	(** Converts a constraint to a string. *)
-	val showConstr: number constr -> string
+	val showConstr: constr -> string
 
 	(** Eliminate an existentially quantified variable from a list of clauses.
 	    It is guaranteed that if [Some y = elimVar x cs] holds, [x] is not an
 	    element of [elimVar x cs]. A result of [None] denotes a
 	    contradiction. *)
-	val elimVar: var -> number constr list -> number constr list option
+	val elimVar: var -> constr list -> constr list option
 
 	(** Evaluates a constraint by substituting all occuring variables in the
 	    constraint and returning [true] iff the assignment satisfies the
 		constraint. Raises [Not_found] when the assignment does not contain all
 	    occuring variables. *)
-	val eval: number stringMap -> number constr -> bool
+	val eval: number stringMap -> constr -> bool
 
 	(** Substitutes (not necessarily all) variables in a constraint. *)
-	val substitute: number exp stringMap -> number constr -> number constr result
+	val substitute: number exp stringMap -> constr -> constr result
 
 end
 

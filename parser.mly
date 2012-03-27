@@ -5,7 +5,7 @@
 	open MyBat
 	open Util
 
-	type item = Symbol of number symbol | Constraint of number constr
+	type item = Symbol of number symbol | Constraint of constr
 %}
 %token <string> IDENTIFIER
 %token <int> NUMBER

@@ -34,25 +34,25 @@ let composeExpMap m1 m2 = StringMap.map (substituteExp m2) m1
 module type DatalogTypes = sig
 
 	type number
-	type 'a constr
+	type constr
 
 	type clause = {
 		head: number symbol;
 		syms: number symbol list;
-		constraints: number constr list;
+		constraints: constr list;
 	}
 
-	val constrVars: number constr -> stringSet
+	val constrVars: constr -> stringSet
 
 	val showNumber: number -> string
 
-	val showConstr: number constr -> string
+	val showConstr: constr -> string
 
-	val elimVar: var -> number constr list -> number constr list option
+	val elimVar: var -> constr list -> constr list option
 
-	val eval: number stringMap -> number constr -> bool
+	val eval: number stringMap -> constr -> bool
 
-	val substitute: number exp stringMap -> number constr -> number constr result
+	val substitute: number exp stringMap -> constr -> constr result
 
 end
 

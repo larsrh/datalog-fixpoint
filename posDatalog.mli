@@ -10,11 +10,11 @@ include Interface with type number = int
 
     Example: [mkPosConstraint [1, "x"; 2, "y"] true 2] translates to
     [x+2y >= 2] *)
-val mkPosConstraint: (int * var) list -> bool -> int -> number constr result option
+val mkPosConstraint: (int * var) list -> bool -> int -> constr result option
 
 (** Create an upper bound constraint. [mkUpperBound v incl b] means [v < b] iff
     [incl] is false, otherwise [v <= b].*)
-val mkUpperBound: var -> bool -> int -> number constr
+val mkUpperBound: var -> bool -> int -> constr
 
 
 (**/**)

@@ -5,24 +5,24 @@ open Util
 open Types
 open Datalog
 
-type 'a posConstr = (var * 'a) list
+type posConstr = (var * int) list
 type upperConstr = var
 
-type 'a lhs = PosConstr of 'a posConstr | UpperConstr of upperConstr
+type lhs = PosConstr of posConstr | UpperConstr of upperConstr
 
 module PosTypes = struct
 
 	type number = int
 
-	type 'a constr = {
-		lhs: 'a lhs;
-		rhs: 'a
+	type constr = {
+		lhs: lhs;
+		rhs: number
 	}
 
 	type clause = {
 		head: number symbol;
 		syms: number symbol list;
-		constraints: number constr list;
+		constraints: constr list;
 	}
 
 	let constrVars constr = match constr.lhs with
@@ -41,7 +41,7 @@ module PosTypes = struct
 	| UpperConstr v ->
 		v ^ " <= " ^ string_of_int (-constr.rhs)
 
-	let simplifyPosLHS (constr: number posConstr) =
+	let simplifyPosLHS (constr: posConstr) =
 		let grouped = groupBy fst constr in
 		let sumN (x, ns) = x, map snd ns |> fold_left (+) 0 in
 		let nonZero (x, n) = match n with
@@ -51,7 +51,7 @@ module PosTypes = struct
 		| _ -> assert false (* avoid compiler warning *) in
 		map sumN grouped |> collect nonZero |> sequenceList
 
-	let simplifyPos (constr: number posConstr) (rhs: number) =
+	let simplifyPos (constr: posConstr) (rhs: number) =
 		let f lhs = match lhs with
 		| [] when 0 >= rhs -> Tautology
 		| [] -> Contradiction
