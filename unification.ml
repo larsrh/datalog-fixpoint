@@ -87,16 +87,22 @@ let unify l1 l2 =
 	let f mapping =
 		let addEq e1 e2 = addEquality mapping.equalities e1 e2 |> mapOption (fun eqs -> {mapping with equalities = eqs}) in
 		let addAss v e = Some {mapping with assignment = StringMap.add v e mapping.assignment} in
+		(* visit each pair of expressions *)
 		function
 		| Constant c1, Constant c2 ->
+			(* two constants: trivial *)
 			if c1 = c2
 				then Some mapping
 				else None
 		| Variable v, e ->
+			(* variable, arbitrary expression: *)
+			(* if `v` has already been seen on the left side, add an equality between `e` and the previous assignment *)
+			(* otherwise, assign `e` to `v` *)
 			if StringMap.mem v mapping.assignment
 				then addEq e (StringMap.find v mapping.assignment)
 				else addAss v e
 		| c, v ->
+			(* constant, variable: add an equality *)
 			addEq c v
 	in
 
