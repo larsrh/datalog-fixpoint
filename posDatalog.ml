@@ -108,8 +108,8 @@ include PosTypes
 module M = Make(PosTypes)
 include M
 
-let translateRHS b op =
-	if op
+let translateRHS b inclusive =
+	if inclusive
 		then b
 		else b + 1
 
