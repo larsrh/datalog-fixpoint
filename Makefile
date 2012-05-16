@@ -2,7 +2,7 @@ OCAMLBUILD=ocamlbuild -use-ocamlfind
 
 default: build
 
-all: clean test build doc package
+all: clean test build doc package-src
 
 build:
 	$(OCAMLBUILD) main.native
@@ -27,5 +27,5 @@ doc:
 clean:
 	$(OCAMLBUILD) -clean
 
-package:
+package-src:
 	git archive --format zip --output impl.zip --prefix datalog/ HEAD
